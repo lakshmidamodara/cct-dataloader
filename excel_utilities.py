@@ -18,8 +18,6 @@ getSheetResult(), remove_item_list(), ConvertDate()
 
 
 import datetime
-import csv
-
 import excel_config_reader as efcr
 
 print('##---Program: excel_utilities..........................')
@@ -103,31 +101,5 @@ def getSheetResult(wbe,active_sheet_value):
     del popping_Var_None
     return result_data
 
-
-# function to write the data into the csv file.
-#def writeCSVFile(oFile, listOfListVal,logFname):
-#def writeCSVFile(oFile, listOfListVal):
-#    #logging.info('excel_utilities.py : Opening the csv file for writing the output %s' %oFile)
-#    print('excel_utilities.py : Opening the csv file for writing the output %s' % oFile)
-#    with open(oFile, 'a') as outcsv:
-#        #configure writer to write standard csv file
-#        writer = csv.writer(outcsv, delimiter=",", lineterminator='\n')
-#        print(listOfListVal)
-#        Len_listOfListVal = len(listOfListVal)
-#        for list in range(0,Len_listOfListVal):
-#            writer.writerow(listOfListVal[list])
-#
-#    outcsv.close()
-
-# function to write the data into the csv file.
-#def write_activity_daily_data_CSV(FileN, rslt):
-#    #logging.info('excel_utilities.py : Opening the csv file for writing the output %s' %FileN)
-#    print('excel_utilities.py : Opening the csv file for writing the output %s' % FileN)
-#    with open(FileN, 'a') as outcsv:
-#        #configure writer to write standard csv file
-#        writer = csv.writer(outcsv, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-#        writer.writerows(rslt)
-#
-#   outcsv.close()
 
 ### ---------End of Functions -----

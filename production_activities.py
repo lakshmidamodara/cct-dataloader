@@ -28,14 +28,8 @@ Log File
 
 '''
 
-#import openpyxl
-import configparser
 import datetime
-#import logging
-
-#import excel_writing as gwWriter
-#import excel_utilities as eu
-#import db_utilities as dbh
+#import psycopg2
 
 ### -- Start of Functions --------
 # function to convert dates to string in mmddyyyy format
@@ -75,14 +69,6 @@ def getPlannedEndCellPosition(config,pos):
     cell_postion = config[keyVal]['activities_planned_end']
     return cell_postion
 
-#function to get output file name for writing out the results csv file
-#def outfile(config):
-#    return config['outputFileName']['fname']
-
-#function to get output directory file name for writing out the results csv file
-#def outfileDir(config):
-#    return config['outputFileName']['fdirectory']
-
 # returns incremented value of a variable
 def incrementfnc(tval):
     tval = tval + 1
@@ -114,6 +100,18 @@ def updateProductionActivities(dbh, db_conn, rList):
         execSQL = "INSERT INTO TEMP.ACTIVITIES (NAME,UNIT_NAME,CONTRACTOR_NAME,PLANNED_START,PLANNED_END,ACTUAL_START,ACTUAL_END,PROJECT_NAME) VALUES (%s,%s,%s,%s,%s,%s,%s,%s);"
         execData = (activityName,unit_name,contractor_name, planned_start,planned_end,actual_start,actual_end,projectName)
         dbh.executeQueryWithData(db_conn, execSQL, execData)
+
+# update the file object into db
+# def updateFileObjectIntoDB( dbh, conn, efcr_activities):
+#     L_FileName = efcr_activities.fileDirectory() + efcr_activities.fileName()
+#     xlsx_stream = open(L_FileName,'rb').read()
+#     execSQL = """update FILE_STORAGE
+#                   set filename = '{fileName}',
+#                       filedata = {data},
+#                       updated = current_timestamp(2)
+#                 where load_type = 'Production'; """
+#     execSQL = execSQL.format(fileName = L_FileName, data = psycopg2.Binary(xlsx_stream) )
+#     dbh.executeQuery(conn, execSQL)
 
 ### ---------End of Functions -----
 
@@ -208,6 +206,9 @@ def processProductionActivities(act_wb, efcr_activities, eut, dbh, config):
     # now run the query to update public.activities table
     stProc = "SELECT update_production_activities()"
     dbh.executeQuery(db_conn, stProc)
+
+    # update file_storage in db
+    #updateFileObjectIntoDB(dbh, db_conn, efcr_activities)
 
     # close or delete all the open instances, Lists, and connections
     # clears all the variables from memory

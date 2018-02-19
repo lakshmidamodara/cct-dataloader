@@ -17,6 +17,7 @@ Output File
 import openpyxl
 import configparser
 import datetime
+import psycopg2
 
 #import excel_writing as ewWriter
 import excel_utilities as eut
@@ -50,6 +51,9 @@ config.read(config_FileName)
 
 prod_act.processProductionActivities(wb, efcr, eut, dbh, config)
 prod_act_data.processProductionActivity_data(wb, efcr, eut, dbh)
+
+# update file_storage in db
+dbh.updateFileObjectIntoDB(dbh, wb, L_FileName)
 
 wb.close()
 del efcr

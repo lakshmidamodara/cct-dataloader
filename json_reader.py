@@ -1,7 +1,7 @@
 import json
-from pprint import pprint as pp
-from json import JSONDecoder
-import sys
+#from pprint import pprint as pp
+#from json import JSONDecoder
+#import sys
 import datetime
 import db_utilities as dbu
 
@@ -351,6 +351,8 @@ def cleanUpTempTables():
     dbu.executeQuery(connObj, LsqlQuery)
 
 
+# -------------Main Program Starts --------#
+#
 cleanUpTempTables()
 with open("./structural_data.json") as f:
     # bundle all the duplicate keys into one

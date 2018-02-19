@@ -37,14 +37,6 @@ def fileDirectory():
     output_dirName = output_dirName1.replace("'", "")
     return output_dirName
 
-#def outputDirectory():
-#    output_dirName1 = config['OutputDir']['outdir']
-#    output_dirName = output_dirName1.replace("'", "")
-#    return output_dirName
-
-#def outputfileName():
-#    return config['OutputFile']['outfile']
-
 # returns the total sheets within the excel workbook
 def totalNoSheets():
     return config['fileDetails']['TotalSheets']

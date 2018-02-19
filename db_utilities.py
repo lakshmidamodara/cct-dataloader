@@ -15,6 +15,7 @@ Description    :
 # Loading the library for postgres sql
 import psycopg2
 import os
+from openpyxl.writer.excel import save_virtual_workbook
 
 def getConn():
     try :
@@ -45,5 +46,17 @@ def executeQuery(conn, exSQL):
        conn.commit()
    except (Exception, psycopg2.DatabaseError) as error:
     print(error)
+
+# update the file object into db
+def updateFileObjectIntoDB( conn, wb, L_FileName):
+    conn = getConn()
+    execSQL = """update FILE_STORAGE  
+                  set filename = '{fileName}',
+                      filedata = {data},
+                      updated = current_timestamp(2) 
+                where load_type = 'Production'; """
+    execSQL = execSQL.format(fileName = L_FileName, data = psycopg2.Binary(save_virtual_workbook(wb)))
+    executeQuery(conn, execSQL)
+    conn.close()
 
 #-- End of Program --
