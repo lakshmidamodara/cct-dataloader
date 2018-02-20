@@ -18,9 +18,13 @@ AS
 	SELECT proj.id as proj_id, proj.name as proj_name, proj.start as proj_start, 
            proj.end as proj_end, loc.id as loc_id, loc.state as loc_state,
            act.id as activity_id, act.name as activity_name, act.unit_id,
+           act.planned_start as activity_pl_start, act.planned_end as activity_pl_end,
+           act.actual_start as activity_act_start, act.actual_end as activity_act_end,
            unit.name as unit_name, act.contractor_id, con.name as contractor_name,
            bact.id as bundle_id, bun.name as bundle_name, ph.id as phase_id, 
-           ph.name as phase_name
+           ph.name as phase_name, ph.scheduled_start as ph_pl_start, 
+           ph.scheduled_end as ph_pl_end, ph.actual_start as ph_act_start,
+           ph.actual_end as ph_act_end
     FROM activities as act
     FULL OUTER JOIN projects as proj on proj.id = act.project_id 
     LEFT OUTER JOIN locations as loc on loc.id = proj.location_id
