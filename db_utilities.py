@@ -48,14 +48,14 @@ def executeQuery(conn, exSQL):
     print(error)
 
 # update the file object into db
-def updateFileObjectIntoDB( conn, wb, L_FileName):
+def updateFileObjectIntoDB( conn, wb, L_FileName,load_type):
     conn = getConn()
     execSQL = """update FILE_STORAGE  
                   set filename = '{fileName}',
                       filedata = {data},
                       updated = current_timestamp(2) 
-                where load_type = 'Production'; """
-    execSQL = execSQL.format(fileName = L_FileName, data = psycopg2.Binary(save_virtual_workbook(wb)))
+                where load_type = '{type}'; """
+    execSQL = execSQL.format(fileName = L_FileName, data = psycopg2.Binary(save_virtual_workbook(wb)), type = load_type)
     executeQuery(conn, execSQL)
     conn.close()
 

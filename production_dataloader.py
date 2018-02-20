@@ -53,7 +53,7 @@ prod_act.processProductionActivities(wb, efcr, eut, dbh, config)
 prod_act_data.processProductionActivity_data(wb, efcr, eut, dbh)
 
 # update file_storage in db
-dbh.updateFileObjectIntoDB(dbh, wb, L_FileName)
+dbh.updateFileObjectIntoDB(dbh, wb, L_FileName, 'Production')
 
 wb.close()
 del efcr
