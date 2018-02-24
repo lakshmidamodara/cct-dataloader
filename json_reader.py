@@ -1,7 +1,4 @@
 import json
-#from pprint import pprint as pp
-#from json import JSONDecoder
-#import sys
 import datetime
 import db_utilities as dbu
 
@@ -78,23 +75,30 @@ def getProjectDetails():
     project_loc_state = getItemsSubChildLevel("project", "location", "state")
     project_loc_postal = getItemsSubChildLevel("project", "location", "postal")
     project_loc_country = getItemsSubChildLevel("project", "location", "country")
+    proj_loc_street = project_loc_street1 + " " + project_loc_street2
 
     print(project_workdays)
 
     ## Update the details to the database temp
     connObj = dbu.getConn()
 
-
     # --------------------------------------------------------
-    # Insert data to project and location table
+    # Insert data to location table and get location id
     # --------------------------------------------------------
     start_date = datetime.datetime.strptime(project_start_date,'%m%d%Y').date().strftime('%Y%m%d')
     end_date = datetime.datetime.strptime(project_end_date,'%m%d%Y').date().strftime('%Y%m%d')
 
-    execSQL = "INSERT INTO TEMP.PROJECTS(NAME, WORKDAYS,BUDGET,LOCATION_NAME,START_DT,END_DT) VALUES (%s,%s,%s,%s,%s,%s);"
-    execData = (project_name, json.dumps(project_workdays),int(project_budget),project_loc_state,start_date,end_date)
-    dbu.executeQueryWithData(connObj, execSQL,execData)
+    execSQL = ('insert_location_data')
+    execData = (proj_loc_street, project_loc_city, project_loc_state, project_loc_country,None, None)
+    project_loc_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+    print( "location id is")
+    print (project_loc_id)
+
+    execSQL = ('insert_project_data')
+    execData = (project_name, start_date, end_date, json.dumps(project_workdays),int(project_budget),None, project_loc_id, None)
+    project_id = dbu.fetchStoredFuncRes(connObj, execSQL,execData)[0]
     connObj.close()
+    return project_id
 
 # -------------- Function to get the contractor details -----------------------
 def getContractorDetails():
@@ -109,18 +113,17 @@ def getContractorDetails():
         contractor_phone = d[lengthList-1]["contractors"][i]["phone"]
         contractor_pcontact = d[lengthList-1]["contractors"][i]["primary_contact"]
 
-
         # --------------------------------------------------------
         # Insert data to project and location table
         # --------------------------------------------------------
-        execSQL = "INSERT INTO TEMP.CONTRACTORS(NAME,EMAIL,PHONE,PM_CONTACT) VALUES (%s,%s,%s,%s);"
-        execData = (contractor_name,contractor_email, contractor_phone, contractor_pcontact)
-        dbu.executeQueryWithData(connObj, execSQL, execData)
+        execSQL = ('insert_contractor_data')
+        execData = (contractor_name, contractor_email, contractor_phone, contractor_pcontact)
+        contractor_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
 
     connObj.close()
+    #return contractor_id
 
-
-def writeActivitiesData_MultipleActivities():
+def writeActivitiesData_MultipleActivities(project_id):
     activityList = []
     connObj = dbu.getConn()
 
@@ -129,6 +132,9 @@ def writeActivitiesData_MultipleActivities():
     bundles_name = getItemsChildLevel(len(d), "bundles", "name")
     bundles_phases = getItemsChildLevel(len(d), "bundles", "phases")
 
+    execSQL = ('insert_bundles_data')
+    execData = (None, bundles_name, project_id, None)
+    bundle_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
 
     for i in range(0, len(item_activities)):
         activities_name = getItemsSubChildLevel_List(len(d),node1,node2,"name",i)
@@ -139,7 +145,14 @@ def writeActivitiesData_MultipleActivities():
         activities_planned_end = getItemsSubChildLevel_List(len(d),node1,node2, "planned_end",i)
         activities_actual_start = getItemsSubChildLevel_List(len(d), node1,node2, "actual_start",i)
         activities_actual_end = getItemsSubChildLevel_List(len(d), node1,node2, "actual_end",i)
+
         activities_unit_name = d[len(d) -1]["bundles"]["activities"][i]["unit"]["name"]
+        execSQL = ('insert_units_data')
+        execData = (activities_unit_name)
+        unit_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+        print ('units id is ')
+        print (unit_id)
+
         activities_material = getItemsSubChildLevel_List(len(d), "bundles", "activities", "material",i)
 
         # --------------------------------------------------------
@@ -174,7 +187,7 @@ def getItems_MultiBundle_MultiActivity(node1,node2,node3,iterationVal_h,iteratio
         #print(itemVar)
     return itemVar
 
-def writeActivitiesData_MultiBundles_MultipleActivities(bundle_item):
+def writeActivitiesData_MultiBundles_MultipleActivities(bundle_item, project_id):
     activityList = []
     node1 = "bundles"
     node2 = "activities"
@@ -184,6 +197,11 @@ def writeActivitiesData_MultiBundles_MultipleActivities(bundle_item):
     #write the values of bundles
     bundles_name = d[len(d) -1][node1][bundle_item]["name"]
     bundles_phases = d[len(d) -1][node1][bundle_item]["phases"]
+
+    execSQL = ('insert_bundles_data')
+    execData = (None, bundles_name, project_id, None)
+    bundle_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+
     #L_item_activities = d[lengthList - 1]["bundles"][bundle_item]["activities"]
     for i in range(0, len(item_activities)):
        activities_name = getItems_MultiBundle_MultiActivity(node1, node2, "name", bundle_item,i)
@@ -194,7 +212,14 @@ def writeActivitiesData_MultiBundles_MultipleActivities(bundle_item):
        activities_planned_end = getItems_MultiBundle_MultiActivity(node1, node2, "planned_end",bundle_item, i)
        activities_actual_start = getItems_MultiBundle_MultiActivity(node1, node2, "actual_start",bundle_item, i)
        activities_actual_end = getItems_MultiBundle_MultiActivity(node1, node2, "actual_end",bundle_item, i)
+
        activities_unit_name = d[len(d)-1]["bundles"][bundle_item]["activities"][i]["unit"]["name"]
+       execSQL = ('insert_units_data')
+       execData = (str(activities_unit_name))
+       unit_id = dbu.fetchStoredFuncRes(connObj, execSQL, 'Rows')[0]
+       print('units id is ')
+       print(unit_id)
+
        activities_material = getItems_MultiBundle_MultiActivity(node1, node2, "material",bundle_item, i)
 
        print(activities_planned_start)
@@ -237,11 +262,15 @@ def getwriteBundleList_DictActivity(node1,node2,node3,iterationVal):
         itemVar = d[i][node1][iterationVal][node2][node3]
     return itemVar
 
-def writeBundleList_DictActivity(bundle_item):
+def writeBundleList_DictActivity(bundle_item, project_id):
     connObj = dbu.getConn()
     print('I am entering fn writeBundleList_DictActivity(i) ---')
     bundles_name = d[len(d) -1]["bundles"][bundle_item]["name"]
     bundles_phases = d[len(d) -1]["bundles"][bundle_item]["phases"]
+
+    execSQL = ('insert_bundles_data')
+    execData = (None, bundles_name, project_id, None)
+    bundle_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
 
     activities_name = getwriteBundleList_DictActivity("bundles","activities","name",bundle_item)
     activities_contractor = getwriteBundleList_DictActivity("bundles","activities", "contractor",bundle_item)
@@ -251,7 +280,14 @@ def writeBundleList_DictActivity(bundle_item):
     activities_planned_end = getwriteBundleList_DictActivity("bundles","activities", "planned_end",bundle_item)
     activities_actual_start = getwriteBundleList_DictActivity("bundles","activities", "actual_start",bundle_item)
     activities_actual_end = getwriteBundleList_DictActivity("bundles","activities", "actual_end",bundle_item)
+
     activities_unit_name = d[len(d)-1]["bundles"][bundle_item]["activities"]["unit"]["name"]
+    execSQL = ('insert_units_data')
+    execData = (activities_unit_name)
+    unit_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+    print('units id is ')
+    print(unit_id)
+
     activities_material = getwriteBundleList_DictActivity("bundles","activities", "material",bundle_item)
 
     # --------------------------------------------------------
@@ -285,12 +321,17 @@ def writeBundleList_DictActivity(bundle_item):
 # There is going to be only one entry in the list            #
 # So directly read the values i.e: one bundle, one activity  #
 #------------------------------------------------------------#
-def writeBundle_Activity():
+def writeBundle_Activity(project_id):
     ## Update the details to the database temp
     connObj = dbu.getConn()
 
     bundles_name = getItemsChildLevel(len(d),"bundles","name")
     bundles_phases = getItemsChildLevel(len(d), "bundles", "phases")
+
+    execSQL = ('insert_bundles_data')
+    execData = (None, bundles_name, project_id, None)
+    bundle_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+
     activities_name = getItemsSubChildLevel("bundles","activities","name")
     activities_contractor = getItemsSubChildLevel("bundles", "activities", "contractor")
     activities_total_planned_hours = getItemsSubChildLevel("bundles", "activities", "total_planned_hours")
@@ -299,7 +340,14 @@ def writeBundle_Activity():
     activities_planned_end = getItemsSubChildLevel("bundles", "activities", "planned_end")
     activities_actual_start = getItemsSubChildLevel("bundles", "activities", "actual_start")
     activities_actual_end = getItemsSubChildLevel("bundles", "activities", "actual_end")
+
     activities_unit_name = d[len(d)-1]["bundles"]["activities"]["unit"]["name"]
+    execSQL = ('insert_units_data')
+    execData = (activities_unit_name)
+    unit_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+    print('units id is ')
+    print(unit_id)
+
     activities_material = getItemsSubChildLevel("bundles", "activities", "material")
 
     # --------------------------------------------------------
@@ -379,7 +427,8 @@ if type(item_bundles)== list:
         #print(type(item_activities))
 
 # --- get all the project details ---
-getProjectDetails()
+project_id = getProjectDetails()
+print ( "Project_id %d", project_id)
 getContractorDetails()
 # --------------------------------
 
@@ -397,24 +446,24 @@ if type(item_bundles)== list:
         if type(item_activities)==list:
             # the current index of bundle is passed
             print('I am calling fn writeActivitiesData_MultiBundles_MultipleActivities() ---')
-            writeActivitiesData_MultiBundles_MultipleActivities(i)
+            writeActivitiesData_MultiBundles_MultipleActivities(i,project_id)
             print('I returned from writeActivitiesData_MultiBundles_MultipleActivities() ---')
         elif type(item_activities)==dict:
             print('I am in blist and adict')
             # get the total list of items of activities in bundles
             print('I am calling fn writeBundleList_DictActivity(i) ---')
-            writeBundleList_DictActivity(i)
+            writeBundleList_DictActivity(i, project_id)
 elif type(item_bundles)== dict:
     print('Item Bundles is a dictionary ---')
     item_activities = d[len(d)-1]["bundles"]["activities"]
     if type(item_activities)==list:
         print('Item activities is a List ---')
         print('Calling func. writeActivitiesData_MultipleActivities() ---')
-        writeActivitiesData_MultipleActivities()
+        writeActivitiesData_MultipleActivities(project_id)
     elif type(item_activities)==dict:
         print('Item activities is a dictionary ---')
         print('Calling func. writeBundle_Activity() ---')
-        writeBundle_Activity()
+        writeBundle_Activity(project_id)
 '''
 def main(args):
     hello(args[1])
