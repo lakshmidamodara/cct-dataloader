@@ -1,0 +1,19 @@
+
+insert into public.portfolios (name) values ('Signal Energy Constructors')
+
+insert into public.projects( name, start, "end") values ( 'Bayshore A', '2017-08-01', '2017-10-31')
+insert into public.projects( name, start, "end") values ( 'Bayshore B, '2017-08-01', '2017-10-31')
+insert into public.projects( name, start, "end") values ( 'Bayshore C', '2017-08-01', '2017-10-31')
+
+insert into public.bundles ( parent_bundle_id, name, project_id, title, phase_id) values ( null, 'Mechanical', 6,null, 4)
+insert into public.bundles ( parent_bundle_id, name, project_id, title, phase_id) values ( null, 'Electrical', 6,null, 4)
+
+insert into public.units ( id, name) values ( 4, 'Piles')
+insert into public.units ( id, name) values ( 5, 'Rows')
+
+insert into public.contractors (name) values ('Sacramento Drilling')
+insert into public.contractors (name) values ('Arraycon')
+
+insert into public.activities (name, unit_id, contractor_id, project_id ) values ('Pile Driving', 4,4,3)
+insert into public.activities (name, unit_id, contractor_id, project_id ) values ('Torque Tube Rows Installed', 5,5,3)
+insert into public.activities (name, unit_id, contractor_id, project_id ) values ('Tracker Rows Completed', 5,5,3)
