@@ -1,5 +1,7 @@
+
 import json
 import datetime
+import sys
 import db_utilities as dbu
 
 # --------------------------------------------------------#
@@ -57,7 +59,7 @@ def getItemsSubChildLevel_List(lengthList,node1,node2,node3,iterationVal):
 
 
 
-# -------------- Function to get the project details -----------------------
+# -------------- Function to get the project details ---------------------
 
 def getProjectName():
     project_name = getItemsChildLevel("project","name")
@@ -100,7 +102,7 @@ def getProjectDetails():
     connObj.close()
     return project_id
 
-# -------------- Function to get the contractor details -----------------------
+# -------------- Function to get the contractor details -----OLD CODE------------------
 def getContractorDetails():
     lengthList = len(d)
     ## Update the details to the database temp
@@ -114,7 +116,7 @@ def getContractorDetails():
         contractor_pcontact = d[lengthList-1]["contractors"][i]["primary_contact"]
 
         # --------------------------------------------------------
-        # Insert data to project and location table
+        # Insert data to public.contractors
         # --------------------------------------------------------
         execSQL = ('insert_contractor_data')
         execData = (contractor_name, contractor_email, contractor_phone, contractor_pcontact)
@@ -122,6 +124,157 @@ def getContractorDetails():
 
     connObj.close()
     #return contractor_id
+
+
+# -------------- Function to get the contractor details -----OLD CODE ENDS---------------
+
+# -------------- Function to get the contractor details ----NEW CODE BEGINS-------------------
+
+def getContractorDetails_List():
+    connObj = dbu.getConn()
+    lengthList = len(d)
+    for i in range(0,len(d[lengthList -1]["contractors"])):
+        # Get the project level details from the json file
+        contractor_name = d[lengthList-1]["contractors"][i]["name"]
+        contractor_email = d[lengthList-1]["contractors"][i]["email"]
+        contractor_phone = d[lengthList-1]["contractors"][i]["phone"]
+        contractor_pcontact = d[lengthList-1]["contractors"][i]["primary_contact"]
+
+        # --------------------------------------------------------
+        # Insert data to public.contractors
+        # --------------------------------------------------------
+        execSQL = ('insert_contractor_data')
+        execData = (contractor_name, contractor_email, contractor_phone, contractor_pcontact)
+        contractor_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+
+    connObj.close()
+
+def getContractorDetails_Dict():
+    ## Update the details to the database temp
+    connObj = dbu.getConn()
+    # Get the project level details from the json file
+    contractor_name = getItemsChildLevel("contractors","name")
+    contractor_email = getItemsChildLevel("contractors","email")
+    contractor_phone = getItemsChildLevel("contractors","phone")
+    contractor_pcontact = getItemsChildLevel("contractors","primary_contact")
+
+    # --------------------------------------------------------
+    # Insert data to public.contractors
+    # --------------------------------------------------------
+    execSQL = ('insert_contractor_data')
+    execData = (contractor_name, contractor_email, contractor_phone, contractor_pcontact)
+    contractor_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+
+    connObj.close()
+
+# -------------- Function to get the Material details -----------------------
+def getMaterialDetails_List():
+    lengthList = len(d)
+    ## Update the details to the database temp
+    #connObj = dbu.getConn()
+    for i in range(0,len(d[lengthList -1]["materials"])):
+    #for i in range(0, item_contractors):
+        # Get the project level details from the json file
+        mat_name = d[lengthList-1]["materials"][i]["name"]
+        mat_plan_delivery = d[lengthList-1]["materials"][i]["planned_delivery"]
+        mat_actual_delivery = d[lengthList-1]["materials"][i]["actual_delivery"]
+        mat_unit_cost = d[lengthList-1]["materials"][i]["unit_cost"]
+
+        # # --------------------------------------------------------
+        # # First truncate the data from project and location table
+        # # --------------------------------------------------------
+        # LsqlQuery = "TRUNCATE TABLE TEMP.MATERIALS"
+        # #dbu.executeQueryString(LsqlQuery, connObj)
+        #
+        # # --------------------------------------------------------
+        # # Insert data to project and location table
+        # # --------------------------------------------------------
+        # execSQL = "INSERT INTO TEMP.MATERIALS(NAME,PLANNED_DELIVERY,ACTUAL_DELIVERY,UNIT_COST) VALUES (%s,%s,%s,%s);"
+        # execData = (mat_name,mat_plan_delivery, mat_actual_delivery, mat_unit_cost)
+        # print(execSQL,execData)
+        #dbu.executeSQLData(execSQL, execData, connObj)
+
+    #connObj.close()
+
+def getMaterialDetails_Dict():
+    ## Update the details to the database temp
+    #connObj = dbu.getConn()
+    # Get the project level details from the json file
+    mat_name = getItemsChildLevel("materials","name")
+    mat_plan_delivery = getItemsChildLevel("materials","planned_delivery")
+    mat_actual_delivery = getItemsChildLevel("materials","actual_delivery")
+    mat_unit_cost = getItemsChildLevel("materials","unit_cost")
+
+    # # --------------------------------------------------------
+    # # First truncate the data from project and location table
+    # # --------------------------------------------------------
+    # LsqlQuery = "TRUNCATE TABLE TEMP.MATERIALS"
+    # #dbu.executeQueryString(LsqlQuery, connObj)
+    #
+    # # --------------------------------------------------------
+    # # Insert data to project and location table
+    # # --------------------------------------------------------
+    # execSQL = "INSERT INTO TEMP.MATERIALS(NAME,PLANNED_DELIVERY,ACTUAL_DELIVERY,UNIT_COST) VALUES (%s,%s,%s,%s);"
+    # execData = (mat_name,mat_plan_delivery, mat_actual_delivery, mat_unit_cost)
+    # print(execSQL,execData)
+    #dbu.executeSQLData(execSQL, execData, connObj)
+
+    #connObj.close()
+
+# -------------- Function to get the Incident details -----------------------
+def getIncidentDetails_List():
+    lengthList = len(d)
+    ## Update the details to the database temp
+    #connObj = dbu.getConn()
+    for i in range(0,len(d[lengthList -1]["incidents"])):
+    #for i in range(0, item_contractors):
+        # Get the project level details from the json file
+        incident_date = d[lengthList-1]["incidents"][i]["date"]
+        incident_type = d[lengthList-1]["incidents"][i]["type"]
+        incident_class = d[lengthList-1]["incidents"][i]["class"]
+        incident_contractor = d[lengthList-1]["incidents"][i]["contractor"]
+
+        # # --------------------------------------------------------
+        # # First truncate the data from project and location table
+        # # --------------------------------------------------------
+        # LsqlQuery = "TRUNCATE TABLE TEMP.INCIDENTS"
+        # #dbu.executeQueryString(LsqlQuery, connObj)
+        #
+        # # --------------------------------------------------------
+        # # Insert data to project and location table
+        # # --------------------------------------------------------
+        # execSQL = "INSERT INTO TEMP.INCIDENTS(DATE,TYPE,CLASS,CONTRACTOR) VALUES (%s,%s,%s,%s);"
+        # execData = (incident_date,incident_type, incident_class, incident_contractor)
+        # print(execSQL,execData)
+        #dbu.executeSQLData(execSQL, execData, connObj)
+
+    #connObj.close()
+
+def getIncidentDetails_Dict():
+    ## Update the details to the database temp
+    #connObj = dbu.getConn()
+    # Get the project level details from the json file
+    incident_date = getItemsChildLevel("incidents","date")
+    incident_type = getItemsChildLevel("incidents","type")
+    incident_class = getItemsChildLevel("incidents","class")
+    incident_contractor = getItemsChildLevel("incidents","contractor")
+
+    # # --------------------------------------------------------
+    # # First truncate the data from project and location table
+    # # --------------------------------------------------------
+    # LsqlQuery = "TRUNCATE TABLE TEMP.INCIDENTS"
+    # #dbu.executeQueryString(LsqlQuery, connObj)
+    #
+    # # --------------------------------------------------------
+    # # Insert data to project and location table
+    # # --------------------------------------------------------
+    # execSQL = "INSERT INTO TEMP.INCIDENTS(DATE,TYPE,CLASS,CONTRACTOR) VALUES (%s,%s,%s,%s);"
+    # execData = (incident_date, incident_type, incident_class, incident_contractor)
+    # print(execSQL,execData)
+    #dbu.executeSQLData(execSQL, execData, connObj)
+
+    #connObj.close()
+# -------------------------------END of INCIDENTS ---- NEW CODE ENDS -------------------------
 
 def writeActivitiesData_MultipleActivities(project_id):
     activityList = []
@@ -136,6 +289,10 @@ def writeActivitiesData_MultipleActivities(project_id):
     execData = (None, bundles_name, project_id, None)
     bundle_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
 
+    execSQL = ('insert_phases_data')
+    execData = (bundles_phases, None, None, None, None)
+    phase_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+
     for i in range(0, len(item_activities)):
         activities_name = getItemsSubChildLevel_List(len(d),node1,node2,"name",i)
         activities_contractor = getItemsSubChildLevel_List(len(d), node1,node2, "contractor",i)
@@ -148,7 +305,7 @@ def writeActivitiesData_MultipleActivities(project_id):
 
         activities_unit_name = d[len(d) -1]["bundles"]["activities"][i]["unit"]["name"]
         execSQL = ('insert_units_data')
-        execData = (activities_unit_name)
+        execData = (activities_unit_name,0)
         unit_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
         print ('units id is ')
         print (unit_id)
@@ -202,6 +359,10 @@ def writeActivitiesData_MultiBundles_MultipleActivities(bundle_item, project_id)
     execData = (None, bundles_name, project_id, None)
     bundle_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
 
+    execSQL = ('insert_phases_data')
+    execData = (bundles_phases, None, None, None, None)
+    phase_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+
     #L_item_activities = d[lengthList - 1]["bundles"][bundle_item]["activities"]
     for i in range(0, len(item_activities)):
        activities_name = getItems_MultiBundle_MultiActivity(node1, node2, "name", bundle_item,i)
@@ -215,8 +376,8 @@ def writeActivitiesData_MultiBundles_MultipleActivities(bundle_item, project_id)
 
        activities_unit_name = d[len(d)-1]["bundles"][bundle_item]["activities"][i]["unit"]["name"]
        execSQL = ('insert_units_data')
-       execData = (str(activities_unit_name))
-       unit_id = dbu.fetchStoredFuncRes(connObj, execSQL, 'Rows')[0]
+       execData = (activities_unit_name,0)
+       unit_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
        print('units id is ')
        print(unit_id)
 
@@ -233,11 +394,12 @@ def writeActivitiesData_MultiBundles_MultipleActivities(bundle_item, project_id)
        actual_end = datetime.datetime.strptime(activities_actual_end, '%m%d%Y').date().strftime('%Y%m%d')
        prj_name = getProjectName()
 
-       execSQL = "INSERT INTO TEMP.ACTIVITIES(NAME,CONTRACTOR_NAME,TOTAL_PLANNED_HOURS,PROJECT_NAME,TOTAL_PLANNED_UNITS,PLANNED_START,PLANNED_END,UNIT_NAME,ACTUAL_START,ACTUAL_END) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);"
-       execData = (
-       activities_name, activities_contractor, activities_total_planned_hours, prj_name, activities_total_planned_units,
-       planned_start, planned_end, activities_unit_name, actual_start, actual_end)
-       dbu.executeQueryWithData(connObj, execSQL, execData)
+       execSQL = ('insert_activities_data')
+       execData = (activities_name, unit_id, activities_contractor, None, activities_total_planned_hours, phase_id,
+                   project_id, activities_total_planned_units, planned_start, planned_end, activities_unit_name,
+                   actual_start, actual_end, None)
+       print(execData)
+       activities_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
 
        print('#####################-- MultiBundle-MultiActivity----')
        print(execSQL)
@@ -245,6 +407,7 @@ def writeActivitiesData_MultiBundles_MultipleActivities(bundle_item, project_id)
        print('writing values')
        print('Bundle Name : %s' % bundles_name)
        print('Bundle Phases : %s' % bundles_phases)
+       print('Activity ID : %d' %activities_id)
        print('Activity Name : %s' % activities_name)
        print('Activity Unit Name : %s' % activities_unit_name)
        print('Activity Material: %s' % activities_material)
@@ -272,6 +435,10 @@ def writeBundleList_DictActivity(bundle_item, project_id):
     execData = (None, bundles_name, project_id, None)
     bundle_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
 
+    execSQL = ('insert_phases_data')
+    execData = (bundles_phases, None, None, None, None)
+    phase_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+
     activities_name = getwriteBundleList_DictActivity("bundles","activities","name",bundle_item)
     activities_contractor = getwriteBundleList_DictActivity("bundles","activities", "contractor",bundle_item)
     activities_total_planned_hours = getwriteBundleList_DictActivity("bundles","activities", "total_planned_hours",bundle_item)
@@ -283,7 +450,7 @@ def writeBundleList_DictActivity(bundle_item, project_id):
 
     activities_unit_name = d[len(d)-1]["bundles"][bundle_item]["activities"]["unit"]["name"]
     execSQL = ('insert_units_data')
-    execData = (activities_unit_name)
+    execData = (activities_unit_name,0)
     unit_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
     print('units id is ')
     print(unit_id)
@@ -332,6 +499,10 @@ def writeBundle_Activity(project_id):
     execData = (None, bundles_name, project_id, None)
     bundle_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
 
+    execSQL = ('insert_phases_data')
+    execData = (bundles_phases, None, None, None, None)
+    phase_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+
     activities_name = getItemsSubChildLevel("bundles","activities","name")
     activities_contractor = getItemsSubChildLevel("bundles", "activities", "contractor")
     activities_total_planned_hours = getItemsSubChildLevel("bundles", "activities", "total_planned_hours")
@@ -343,7 +514,7 @@ def writeBundle_Activity(project_id):
 
     activities_unit_name = d[len(d)-1]["bundles"]["activities"]["unit"]["name"]
     execSQL = ('insert_units_data')
-    execData = (activities_unit_name)
+    execData = (activities_unit_name,0)
     unit_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
     print('units id is ')
     print(unit_id)
@@ -375,36 +546,15 @@ def writeBundle_Activity(project_id):
     print('Activity Material: %s' % activities_material)
     print('#####################')
 
-## First clean up the tables
-def cleanUpTempTables():
-## Update the details to the database temp
-    connObj = dbu.getConn()
-
-    # --------------------------------------------------------
-    # First truncate the data from project
-    # --------------------------------------------------------
-    LsqlQuery = "TRUNCATE TABLE TEMP.PROJECTS"
-    dbu.executeQuery(connObj, LsqlQuery)
-
-    # --------------------------------------------------------
-    # Contractors
-    # --------------------------------------------------------
-    LsqlQuery = "TRUNCATE TABLE TEMP.CONTRACTORS"
-    dbu.executeQuery(connObj, LsqlQuery)
-
-    # --------------------------------------------------------
-    # Activities
-    # --------------------------------------------------------
-    LsqlQuery = "TRUNCATE TABLE TEMP.ACTIVITIES"
-    dbu.executeQuery(connObj, LsqlQuery)
-
 
 # -------------Main Program Starts --------#
-#
-cleanUpTempTables()
-with open("./structural_data.json") as f:
-    # bundle all the duplicate keys into one
-    d = json.load(f, object_pairs_hook=join_duplicate_keys)
+
+## Read the JSON Stream from stdin
+jsonData = sys.stdin.buffer.read()
+d = json.loads(jsonData)
+#with open("./structural_data.json") as f:
+#   # bundle all the duplicate keys into one
+#  d = json.load(f, object_pairs_hook=join_duplicate_keys)
 
 print(d)
 #print(type(d))
@@ -417,7 +567,14 @@ print(d)
 # first get each item from the list
 item_project = getItemsParentLevel(len(d),"project")
 item_bundles = getItemsParentLevel(len(d),"bundles")
+item_contractors = getItemsParentLevel(len(d),"contractors")
+item_materials = getItemsParentLevel(len(d),"materials")
+item_incidents = getItemsParentLevel(len(d),"incidents")
+
 print('Bundle Type is :- %s' %type(item_bundles))
+print('Contractor Type is :- %s' %type(item_contractors))
+print('Material Type is :- %s' %type(item_materials))
+print('Incidents Type is :- %s' %type(item_incidents))
 
 if type(item_bundles)== list:
     lengthList = len(d)
@@ -428,9 +585,27 @@ if type(item_bundles)== list:
 
 # --- get all the project details ---
 project_id = getProjectDetails()
-print ( "Project_id %d", project_id)
-getContractorDetails()
-# --------------------------------
+
+# -- Main Fn() get all the contractor details ---
+if type(item_contractors)== list:
+    getContractorDetails_List()
+elif type(item_contractors)== dict:
+    getContractorDetails_Dict()
+# -----------------------------------------------
+
+# -- Main Fn() get all the Material details ---
+if type(item_materials)== list:
+    getMaterialDetails_List()
+elif type(item_materials)== dict:
+    getMaterialDetails_Dict()
+# -----------------------------------------------
+
+# -- Main Fn() get all the Incident details ---
+if type(item_incidents)== list:
+    getIncidentDetails_List()
+elif type(item_incidents)== dict:
+    getIncidentDetails_Dict()
+# -----------------------------------------------
 
 #---------------------------------------------------------------
 ## Now get the values of the bundles
