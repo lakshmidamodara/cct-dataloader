@@ -10,19 +10,25 @@
 --- 
 ------------------------------------------------------------
 
+
 CREATE OR REPLACE FUNCTION insert_units_data(p_name text, p_id integer)
 RETURNS INTEGER AS $$
+DECLARE
+	l_unit_id INTEGER;
 BEGIN
-	
-	if exists ( select 1 from public.units as u where upper(u.name) = upper(p_name))
-    then
-          return( select id from public.units as u where upper(u.name) = upper(p_name));
-    else
+	SELECT id INTO STRICT l_unit_id
+	FROM public.units AS u
+	WHERE
+		UPPER(u.name) IS NOT DISTINCT FROM UPPER(p_name);
+    
+	RETURN l_unit_id;
 		
-    	INSERT INTO public.units (id, name)
-     	VALUES (nextval('public.units_id_seq'), p_name);
-    	return currval('public.units_id_seq');
-     end if;
+	EXCEPTION
+		WHEN NO_DATA_FOUND THEN
+			INSERT INTO public.units (name) VALUES (p_name);
+			RETURN CURRVAL('public.units_id_seq');
+		WHEN TOO_MANY_ROWS THEN
+			RAISE EXCEPTION 'Found more than one row in units for name %', p_name;
    
 END; $$
 LANGUAGE plpgsql;

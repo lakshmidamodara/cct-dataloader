@@ -20,12 +20,12 @@ BEGIN
       SELECT act.id, tact.date
       FROM public.activities as act,
              temp.activity_data as tact
-     WHERE UPPER(act.name) = UPPER(tact.activity_name)
-       AND 1 not in ( SELECT 1 
+     WHERE UPPER(act.name) IS NOT DISTINCT FROM UPPER(tact.activity_name)
+       AND 1 NOT IN ( SELECT 1 
                         FROM public.activity_data as adata
-                       WHERE act.id = adata.activity_id
-                         AND UPPER(act.name) = UPPER(tact.activity_name)
-                         AND adata.date = tact.date ) ;
+                       WHERE act.id IS NOT DISTINCT FROM adata.activity_id
+                         AND UPPER(act.name) IS NOT DISTINCT FROM UPPER(tact.activity_name)
+                         AND adata.date IS NOT DISTINCT FROM tact.date ) ;
                          
 END; $$
 LANGUAGE plpgsql;

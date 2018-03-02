@@ -32,7 +32,7 @@ BEGIN
 				INSERT INTO public.contractors (name, email, phone, pm_contact) VALUES (p_name, p_email, p_phone, p_pm_contact);
 				RETURN CURRVAL('public.contractors_id_seq');
 			WHEN TOO_MANY_ROWS THEN
-				RAISE EXCEPTION 'Found more than one row in contractors for name %, email %', p_name, p_email;
+				RAISE EXCEPTION 'Found more than one row in contractors for name %', p_name;
 
 END; $$
 LANGUAGE plpgsql;
