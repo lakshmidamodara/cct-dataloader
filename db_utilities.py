@@ -47,6 +47,22 @@ def executeQuery(conn, exSQL):
    except (Exception, psycopg2.DatabaseError) as error:
     print(error)
 
+def fetchStoredFuncRes(conn, exSQL, exData):
+    ## This function is useful to call stored procs for single row returns
+   try:
+       cur = conn.cursor()
+       cur.callproc(exSQL, tuple(exData))
+       # process the result set
+       row = cur.fetchone()
+       conn.commit()
+       return(row)
+       cur.close()
+       print(exSQL)
+       print(exData)
+
+   except (Exception, psycopg2.DatabaseError) as error:
+    print(error)
+
 # update the file object into db
 def updateFileObjectIntoDB( conn, wb, L_FileName,load_type):
     conn = getConn()
