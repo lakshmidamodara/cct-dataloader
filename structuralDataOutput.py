@@ -13,17 +13,19 @@ writeActivityData - To write the individual activity sheets - Only the structura
 
 Files need to run this program:
 dib_utilities : To get the connection details and executing query.
+excel_config_reader.py - to get the details of excel sheet to be written to
+excel_activity_config.ini - configuration file for all the cell positions for output to be written to
 
 '''
 
 import io
-from sys import stdout
 import sys
 import datetime
 import psycopg2
 import xlsxwriter
 import db_utilities as dbu
 import excel_config_reader as ecr
+import utilities as util
 
 con = None
 total_activities = 0
@@ -86,20 +88,18 @@ def writeActivityData(wb,actId,actName,dataList):
 ## --------------End of function writeActivityData() --------------------------------------------
 def openFile(output):
     try:
-        #fname = ecr.getoutfileName()
-        #output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-        #workbook = xlsxwriter.Workbook(fname, {'in_memory': True})
-    except FileNotFoundError:
-        print('File Not found....')
+    except FileNotFoundError as FOF:
+        print('File Not found.<line 102>: openFile()..' %FOF)
     finally:
         return workbook
 
 def openDatabaseConnection():
     try:
         con = dbu.getConn()
-    except psycopg2.DatabaseError:
-        print('Error Opening Database connection...')
+    except psycopg2.DatabaseError as error:
+        print('Error Opening Database connection...<line 110>: openDatabaseConnection()' %error)
+        sys.exit(1)
     finally:
         return con
 
@@ -128,7 +128,7 @@ def printOverviewHeaders():
         worksheet.write(ecr.getPrint_Updated_Heading()[0], ecr.getPrint_Updated_Heading()[1], 'UPDATED', format)
         worksheet.write(ecr.getPrint_Updated_Value()[0], ecr.getPrint_Updated_Value()[1], str(dateTime))
     except Exception as e:
-        print('Error while writing Overview Heading ...%s' %e)
+        print('Error while writing Overview Heading <line 140>: printOverviewHeaders()...%s' %e)
 
 def printOverviewActivityHeading():
     try:
@@ -146,7 +146,7 @@ def printOverviewActivityHeading():
         worksheet.set_column(ecr.getPrint_Actual_Heading()[0], ecr.getPrint_Actual_Heading()[1], 15)
         worksheet.write(ecr.getPrint_Actual_Heading()[0], ecr.getPrint_Actual_Heading()[1], 'ACTUAL', format)
     except Exception as e:
-        print('Error while writing activity header in overview ..%s' %e)
+        print('Error while writing activity header in overview <line 158> :printOverviewActivityHeading() ..%s' %e)
 
 def writeActivityDetails():
     try:
@@ -165,7 +165,7 @@ def writeActivityDetails():
 
         last_activity_row = j  # set the last row that was written to
     except Exception as e:
-        print('Error while writing activity data details on overview sheet ...%s' %e)
+        print('Error while writing activity data details on overview sheet <line 177>: writeActivityDetails()...%s' %e)
 
 def writeActivityOverview():
     try:
@@ -195,23 +195,38 @@ def writeActivityOverview():
             worksheet.write(last_activity_row + 1, 1, 'ACTUAL DAILY AVG.', format)
             # last_activity_row = last_activity_row + 1
     except Exception as e:
-        print(e)
+        raise util.DLException(util.__FILE__(),util.__LINE__(), e)
 
 ## --------------------------Main Program starts --------------------------------------------------
 try:
     rstList = []
     conn = openDatabaseConnection()
     cur = conn.cursor()
-    cur.execute("SELECT DISTINCT ACTIVITY_ID,PROJ_ID,PROJ_NAME,ACTIVITY_NAME,UNIT_ID,UNIT_NAME,CONTRACTOR_ID,CONTRACTOR_NAME,PROJ_START,PROJ_END FROM PUBLIC.PROJECT_ACTIVITIES WHERE ACTIVITY_ID IS NOT NULL ORDER BY ACTIVITY_ID")
+    cur1 = conn.cursor()
+    cur.execute("SELECT DISTINCT ACTIVITY_ID,PROJ_ID,PROJ_NAME,ACTIVITY_NAME,UNIT_ID,UNIT_NAME,CONTRACTOR_ID,CONTRACTOR_NAME,PROJ_START,PROJ_END FROM TEMP.PROJECT_ACTIVITIES WHERE ACTIVITY_ID IS NOT NULL ORDER BY ACTIVITY_ID")
+    cur1.execute("SELECT COUNT(*) FROM TEMP.PROJECT_ACTIVITIES WHERE ACTIVITY_ID IS NOT NULL")
 
+    try:
+        # raise the exception if there is no data fetch from the database
+        # Throw user-defined exception
+        lrow = cur1.fetchone()
+        if lrow[0] == 0:
+            raise util.DLException(util.__FILE__(), util.__LINE__(),'No data in view project_activities')
+    except Exception as e:
+        raise util.DLException(util.__FILE__(), util.__LINE__(),e)
+    # check whether records received from database based on the query
     while True:
         row = cur.fetchone()
         rstList = []
         if row == None:
             break
 
-        #print("ProjID: " + str(row[0]) + "\t\tProjName: " + str(row[1] + "\t\tAName: " + str(row[2])))
-        rstList.append(row[0]) #- Activity ID
+        try:
+            rstList.append(row[0]) #- Activity ID
+            if row[0] == "":
+                raise MyException('<line 236> Main(): Null Value in ActivityID' %row[0])
+        except MyException as e:
+            print('Activity ID cannot be null ',e.value)
         rstList.append(row[1]) #- Project ID
         rstList.append(row[2]) #- Project Name
         rstList.append(row[3]) #- Activity Name
@@ -293,7 +308,9 @@ finally:
     workbook.close()
     #xcl_data = output.getvalue()
     output.seek(0)
-    with open("demo.xlsx", 'wb') as out:  ## Open temporary file as bytes
-        out.write(output.getvalue())
-
+    try:
+        with open("demo.xlsx", 'wb') as out:  ## Open temporary file as bytes
+            out.write(output.getvalue())
+    except Exception as e:
+        print('Error in <line 324> while writing to demo.xlsx : main()>', e)
 ## ------------- End of Program ----------------------
