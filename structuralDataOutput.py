@@ -6,16 +6,14 @@ Updation Date  : 03/01/2018
 Version        : 1.0
 Description    :
 This program reads data from the view : project_activities and updates the Overview sheet.
-
 Functions:
 Main Function - To write the overview sheet
 writeActivityData - To write the individual activity sheets - Only the structural data
-
 Files need to run this program:
-dib_utilities : To get the connection details and executing query.
+db_utilities : To get the connection details and executing query.
 excel_config_reader.py - to get the details of excel sheet to be written to
 excel_activity_config.ini - configuration file for all the cell positions for output to be written to
-
+utilities : To get the Exception details caught in this program
 '''
 
 import io
@@ -26,6 +24,7 @@ import xlsxwriter
 import db_utilities as dbu
 import excel_config_reader as ecr
 import utilities as util
+import traceback
 
 con = None
 total_activities = 0
@@ -41,9 +40,10 @@ finalList = []
 # Then it creates individual sheets for each activity and writes data         #
 #-----------------------------------------------------------------------------#-
 def writeActivityData(wb,actId,actName,dataList):
+
     # first get the activity id from the activity data
     # first iterate through the actId list and get the first
-    con = dbu.getConn() # get the connection details from db_utilities
+    con = openDatabaseConnection() # get the connection details from db_utilities
     cur = con.cursor()  # create a cursor object
     print(actId)
     print(actName)
@@ -85,12 +85,14 @@ def writeActivityData(wb,actId,actName,dataList):
         worksheet.write(ecr.getPrint_Across_ActSheet_CompletedToDate_Heading()[0],ecr.getPrint_Across_ActSheet_CompletedToDate_Heading()[1], 'COMPLETE TO DATE', green_color_format)
         worksheet.write(ecr.getPrint_Across_ActSheet_PlannedToDate_Heading()[0],ecr.getPrint_Across_ActSheet_PlannedToDate_Heading()[1], 'PLANNED TO DATE', green_color_format)
 
+  #  raise util.DLException(util.__FILE__(), util.__LINE__(), e)
+
 ## --------------End of function writeActivityData() --------------------------------------------
 def openFile(output):
     try:
         workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-    except FileNotFoundError as FOF:
-        print('File Not found.<line 102>: openFile()..' %FOF)
+    except Exception as e:
+        raise util.DLException(util.__FILE__(), util.__LINE__(), e)
     finally:
         return workbook
 
@@ -98,7 +100,7 @@ def openDatabaseConnection():
     try:
         con = dbu.getConn()
     except psycopg2.DatabaseError as error:
-        print('Error Opening Database connection...<line 110>: openDatabaseConnection()' %error)
+        raise util.DLException(util.__FILE__(), util.__LINE__(), error)
         sys.exit(1)
     finally:
         return con
@@ -128,7 +130,7 @@ def printOverviewHeaders():
         worksheet.write(ecr.getPrint_Updated_Heading()[0], ecr.getPrint_Updated_Heading()[1], 'UPDATED', format)
         worksheet.write(ecr.getPrint_Updated_Value()[0], ecr.getPrint_Updated_Value()[1], str(dateTime))
     except Exception as e:
-        print('Error while writing Overview Heading <line 140>: printOverviewHeaders()...%s' %e)
+        raise util.DLException(util.__FILE__(), util.__LINE__(), e)
 
 def printOverviewActivityHeading():
     try:
@@ -146,7 +148,7 @@ def printOverviewActivityHeading():
         worksheet.set_column(ecr.getPrint_Actual_Heading()[0], ecr.getPrint_Actual_Heading()[1], 15)
         worksheet.write(ecr.getPrint_Actual_Heading()[0], ecr.getPrint_Actual_Heading()[1], 'ACTUAL', format)
     except Exception as e:
-        print('Error while writing activity header in overview <line 158> :printOverviewActivityHeading() ..%s' %e)
+        raise util.DLException(util.__FILE__(), util.__LINE__(), e)
 
 def writeActivityDetails():
     try:
@@ -165,7 +167,7 @@ def writeActivityDetails():
 
         last_activity_row = j  # set the last row that was written to
     except Exception as e:
-        print('Error while writing activity data details on overview sheet <line 177>: writeActivityDetails()...%s' %e)
+        raise util.DLException(util.__FILE__(), util.__LINE__(), e)
 
 def writeActivityOverview():
     try:
@@ -195,7 +197,7 @@ def writeActivityOverview():
             worksheet.write(last_activity_row + 1, 1, 'ACTUAL DAILY AVG.', format)
             # last_activity_row = last_activity_row + 1
     except Exception as e:
-        raise util.DLException(util.__FILE__(),util.__LINE__(), e)
+        raise util.DLException(util.__FILE__(), util.__LINE__(), e)
 
 ## --------------------------Main Program starts --------------------------------------------------
 try:
@@ -203,17 +205,16 @@ try:
     conn = openDatabaseConnection()
     cur = conn.cursor()
     cur1 = conn.cursor()
-    cur.execute("SELECT DISTINCT ACTIVITY_ID,PROJ_ID,PROJ_NAME,ACTIVITY_NAME,UNIT_ID,UNIT_NAME,CONTRACTOR_ID,CONTRACTOR_NAME,PROJ_START,PROJ_END FROM TEMP.PROJECT_ACTIVITIES WHERE ACTIVITY_ID IS NOT NULL ORDER BY ACTIVITY_ID")
-    cur1.execute("SELECT COUNT(*) FROM TEMP.PROJECT_ACTIVITIES WHERE ACTIVITY_ID IS NOT NULL")
+    cur.execute("SELECT DISTINCT ACTIVITY_ID,PROJ_ID,PROJ_NAME,ACTIVITY_NAME,UNIT_ID,UNIT_NAME,CONTRACTOR_ID,CONTRACTOR_NAME,PROJ_START,PROJ_END FROM PUBLIC.PROJECT_ACTIVITIES WHERE ACTIVITY_ID IS NOT NULL ORDER BY ACTIVITY_ID")
+    cur1.execute("SELECT COUNT(*) FROM PUBLIC.PROJECT_ACTIVITIES WHERE ACTIVITY_ID IS NOT NULL")
 
-    try:
-        # raise the exception if there is no data fetch from the database
-        # Throw user-defined exception
-        lrow = cur1.fetchone()
-        if lrow[0] == 0:
-            raise util.DLException(util.__FILE__(), util.__LINE__(),'No data in view project_activities')
-    except Exception as e:
-        raise util.DLException(util.__FILE__(), util.__LINE__(),e)
+    # raise the exception if there is no data fetch from the database
+    # Throw user-defined exception
+    lrow = cur1.fetchone()
+    if lrow[0] == 0:
+        raise util.DLException(util.__FILE__(), util.__LINE__(),'No data in view project_activities')
+
+
     # check whether records received from database based on the query
     while True:
         row = cur.fetchone()
@@ -221,12 +222,10 @@ try:
         if row == None:
             break
 
-        try:
-            rstList.append(row[0]) #- Activity ID
-            if row[0] == "":
-                raise MyException('<line 236> Main(): Null Value in ActivityID' %row[0])
-        except MyException as e:
-            print('Activity ID cannot be null ',e.value)
+        rstList.append(row[0]) #- Activity ID
+        if row[0] == "":
+            raise util.DLException(util.__FILE__(), util.__LINE__(),'ACTIVITY_ID IS NULL')
+
         rstList.append(row[1]) #- Project ID
         rstList.append(row[2]) #- Project Name
         rstList.append(row[3]) #- Activity Name
@@ -241,76 +240,79 @@ try:
         activity_name.append(row[3]) #- add the activity_name to the list
         finalList.append(rstList)
         #print("ProjectID: " + row[1] + "\t\tProjectName: " + str(row[2]))
-    print (finalList)
-    total_activities = len(finalList)
+        print (finalList)
+        total_activities = len(finalList)
 
-    # Create excel workbook using xlswriter
-    output = io.BytesIO()
-    workbook = openFile(output)
+        # Create excel workbook using xlswriter
+        output = io.BytesIO()
+        workbook = openFile(output)
 
-    # create the first sheet - Overview
-    sheetN = ecr.getOverviewSheetName()
-    worksheet = workbook.add_worksheet(sheetN)
-    worksheet = workbook.get_worksheet_by_name(sheetN)
+        # create the first sheet - Overview
+        sheetN = ecr.getOverviewSheetName()
+        worksheet = workbook.add_worksheet(sheetN)
+        worksheet = workbook.get_worksheet_by_name(sheetN)
 
-    # --- Create excel sheets inside workbook ----- #
-    # first get the number of activities
-    # --- Printing date and time in 1st cell
-    dateTime = datetime.datetime.now().date()
-    totCol = int(ecr.getTotalWorkingColumn())
+        # --- Create excel sheets inside workbook ----- #
+        # first get the number of activities
+        # --- Printing date and time in 1st cell
+        dateTime = datetime.datetime.now().date()
+        totCol = int(ecr.getTotalWorkingColumn())
 
-    #Create format templates to be used in cells
-    form_at = workbook.add_format()
-    format = workbook.add_format({'bold': True, 'font_color': 'black', 'align':'center' ,'font_size': 10})
-    format_1 = workbook.add_format({'font_color': 'black', 'align': 'center', 'font_size': 10})
-    green_color_format = workbook.add_format({'fg_color': '#58D68D'})
-    yellow_color_format = workbook.add_format({'bg_color': '#F7DC6F'})
+        #Create format templates to be used in cells
+        form_at = workbook.add_format()
+        format = workbook.add_format({'bold': True, 'font_color': 'black', 'align':'center' ,'font_size': 10})
+        format_1 = workbook.add_format({'font_color': 'black', 'align': 'center', 'font_size': 10})
+        green_color_format = workbook.add_format({'fg_color': '#58D68D'})
+        yellow_color_format = workbook.add_format({'bg_color': '#F7DC6F'})
 
-    # create the background color to green
-    # Writing the overview project header
-    printOverviewHeaders()
+        # create the background color to green
+        # Writing the overview project header
+        printOverviewHeaders()
 
-    ## Project Summary heading
-    # Color the cell with green
-    for i in range(0,totCol):
-        worksheet.write(8,i,'', green_color_format)
-    # printing the project summary heading
-    worksheet.write(ecr.getPrint_ProjectSummary_Heading()[0],ecr.getPrint_ProjectSummary_Heading()[1], 'PROJECT SUMMARY',green_color_format)
+        ## Project Summary heading
+        # Color the cell with green
+        for i in range(0,totCol):
+            worksheet.write(8,i,'', green_color_format)
+        # printing the project summary heading
+        worksheet.write(ecr.getPrint_ProjectSummary_Heading()[0],ecr.getPrint_ProjectSummary_Heading()[1], 'PROJECT SUMMARY',green_color_format)
 
-    #--- Now write the heading for activities-------------------------
-    printOverviewActivityHeading()
+        #--- Now write the heading for activities-------------------------
+        printOverviewActivityHeading()
 
-    # --- Write the activity list from the list and color the subsequent row with magenta color
-    writeActivityDetails()
-    # ---- Print the details on the cells based on the resultList
-    writeActivityOverview()
+        # --- Write the activity list from the list and color the subsequent row with magenta color
+        writeActivityDetails()
+        # ---- Print the details on the cells based on the resultList
+        writeActivityOverview()
 
-    ## ------- Writing the individual sheet - Activity data ---------------
-    for i in range(0, 1):
-        writeActivityData(workbook,activity_id,activity_name,finalList)
+        ## ------- Writing the individual sheet - Activity data ---------------
+        for i in range(0, 1):
+            writeActivityData(workbook,activity_id,activity_name,finalList)
 
-    # close the workbook
-    #workbook.close()
+        if con:
+            con.close()
 
-except psycopg2.DatabaseError as error:
-    print (error)
-    if con:
-        con.rollback()
-
-    print
-    'Error %s' % psycopg2.DatabaseError
-    sys.exit(1)
-
-finally:
-    if con:
-        #print (total_activities)
-        con.close()
     workbook.close()
-    #xcl_data = output.getvalue()
+
+
+except util.DLException as e:
+    print(e.__str__())
+    raise
+except NameError as nm:
+    traceback.print_exc()
+    raise
+except psycopg2.DatabaseError as e:
+    #print("%s in %s at %d" % (e.pgerror.rstrip(), util.__FILE__(), util.__LINE__()))
+    traceback.print_exc()
+    raise
+
     output.seek(0)
+    print( output.getvalue())
+    sys.exit(0)
+    '''
     try:
         with open("demo.xlsx", 'wb') as out:  ## Open temporary file as bytes
             out.write(output.getvalue())
     except Exception as e:
-        print('Error in <line 324> while writing to demo.xlsx : main()>', e)
+        raise util.DLException(util.__FILE__(), util.__LINE__(), e)
+    '''
 ## ------------- End of Program ----------------------

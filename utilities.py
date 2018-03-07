@@ -4,14 +4,15 @@ Author Name    : Lakshmi Damodara
 Date           : 03/02/2018
 Version        : 1.0
 Description    : This program is for all general purpose tools
-
 '''
 
-import sys
 import inspect
 
 def __LINE__():
-    return sys.exc_info()[2].tb_frame.f_back.f_lineno
+    callerframerecord = inspect.stack()[1]
+    frame = callerframerecord[0]
+    info = inspect.getframeinfo(frame)
+    return info.lineno
 
 def __FILE__():
     return inspect.currentframe().f_code.co_filename
@@ -27,4 +28,3 @@ class DLException(Exception):
         self.line = lineno
     def __str__(self):
         return str("%s in %s at lineNo %d" %(self.value, self.name, self.line) )
-

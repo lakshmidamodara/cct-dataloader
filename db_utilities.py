@@ -15,6 +15,7 @@ Description    :
 # Loading the library for postgres sql
 import psycopg2
 import os
+import utilities as utl
 from openpyxl.writer.excel import save_virtual_workbook
 
 def getConn():
@@ -26,7 +27,8 @@ def getConn():
         print (myConnection)
         return myConnection
     except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+        print ( "Database Error %s " %error)
+        raise
 
 def executeQueryWithData(conn, exSQL, exData):
    try:
@@ -36,7 +38,8 @@ def executeQueryWithData(conn, exSQL, exData):
        cur.execute(exSQL, exData)
        conn.commit()
    except (Exception, psycopg2.DatabaseError) as error:
-    print(error)
+       print("Database Error %s " % error)
+       raise
 
 def executeQuery(conn, exSQL):
    try:
@@ -45,7 +48,8 @@ def executeQuery(conn, exSQL):
        cur.execute(exSQL)
        conn.commit()
    except (Exception, psycopg2.DatabaseError) as error:
-    print(error)
+       print("Database Error %s " % error)
+       raise
 
 def fetchStoredFuncRes(conn, exSQL, exData):
     ## This function is useful to call stored procs for single row returns
@@ -59,20 +63,26 @@ def fetchStoredFuncRes(conn, exSQL, exData):
        cur.close()
        print(exSQL)
        print(exData)
-
    except (Exception, psycopg2.DatabaseError) as error:
-    print(error)
+       print("Database Error %s " % error)
+       raise
 
 # update the file object into db
 def updateFileObjectIntoDB( conn, wb, L_FileName,load_type):
-    conn = getConn()
-    execSQL = """update FILE_STORAGE  
-                  set filename = '{fileName}',
-                      filedata = {data},
-                      updated = current_timestamp(2) 
-                where load_type = '{type}'; """
-    execSQL = execSQL.format(fileName = L_FileName, data = psycopg2.Binary(save_virtual_workbook(wb)), type = load_type)
-    executeQuery(conn, execSQL)
-    conn.close()
+    try:
+        conn = getConn()
+        execSQL = """update FILE_STORAGE  
+                      set filename = '{fileName}',
+                          filedata = {data},
+                          updated = current_timestamp(2) 
+                    where load_type = '{type}'; """
+        execSQL = execSQL.format(fileName = L_FileName, data = psycopg2.Binary(save_virtual_workbook(wb)), type = load_type)
+        executeQuery(conn, execSQL)
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("Database Error %s " % error)
+        raise
+    finally:
+        if conn is not None:
+            conn.close()
 
 #-- End of Program --
