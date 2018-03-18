@@ -1,4 +1,5 @@
 const PythonShell = require('python-shell');
+//var PE = require('./process_excel/');
 const fs = require('fs');
 
 const options = {
@@ -6,16 +7,17 @@ const options = {
     pythonPath: 'C:/Users/Lakshmi Damodara/AppData/Local/Continuum/anaconda3/python.exe'
 };
 
+/**/
 var pyshell = new PythonShell('baseline_dataloader.py', options);
 pyshell.on('message', function (message) {
     // received a message sent from the Python script (a simple "print" statement)
     console.log(message);
   });
-
-fs.readFileSync('Bayshore A-Mechanical Tracker v5.xlsx', 'utf8', function(err, data) {
-    //console.log(data);
-    pyshell.send(data);
-});
+/**/
+//debugger;
+var data = fs.readFileSync('Bayshore A-Mechanical Tracker v5.xlsx', 'base64');
+//PE.processExcel(data);
+pyshell.send(data)
 //Lakshmi TODO: needs to return parsing error codes
 /*
 separate error codes for the following conditions:
@@ -26,7 +28,7 @@ separate error codes for the following conditions:
 5) Unknown error type
 Also please provide location of the error (line number in the input file or row in spreadsheet)
 */
-
+/**/
   // end the input stream and allow the process to exit
   pyshell.end(function (err,code,signal) {
     if (err) {
@@ -38,5 +40,5 @@ Also please provide location of the error (line number in the input file or row 
     console.log('finished');
     console.log('finished');
   });
-
+/**/
 
