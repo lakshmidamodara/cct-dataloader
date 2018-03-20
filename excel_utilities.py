@@ -19,10 +19,30 @@ getSheetResult(), remove_item_list(), ConvertDate()
 
 import datetime
 import excel_config_reader as efcr
+import string
 
 print('##---Program: excel_utilities..........................')
 print(datetime.datetime.today())
 print('##---------------------------------------------........')
+
+def getLowerAlphabetDictionary():
+    letter_count = dict(zip(string.ascii_lowercase, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25] * 26))
+    return letter_count
+
+def getUpperAlphabetDictionary():
+    letter_count = dict(zip(string.ascii_uppercase, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25] * 26))
+    return letter_count
+
+def getRowColumn(strVal):
+    rowCol = []
+    Tcol = strVal[0] #get the first character from the string: eg: if strVal = A5 -> 'A' is selected
+    T1col = getUpperAlphabetDictionary() # get the corresponding key value from the function
+    col = T1col[Tcol] # assign the key to the col index value: eg) A5 -> 0
+    Trow = int(strVal[1:]) # getting the rest of the string value after the first
+    row = Trow -1
+    rowCol.append(row)
+    rowCol.append(col)
+    return rowCol
 
 def remove_items_list(listVar,removeListVar):
     # remove the unnecessary values from the result data
