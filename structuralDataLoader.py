@@ -10,7 +10,6 @@ Description    :
 '''
 
 import json
-import datetime
 import sys
 import psycopg2
 import db_utilities as dbu
@@ -46,7 +45,10 @@ def getItemsParentLevel(lengthList,node):
         itemVar =""
         for i in range(0,lengthList):
             itemVar = d[i][node]
-        return itemVar
+        if itemVar:
+            return itemVar
+        else:
+            return None
     except Exception as error:
         pass
 
@@ -56,7 +58,10 @@ def getItemsChildLevel(node1,node2):
         lengthList = len(d)
         for i in range(0,lengthList):
             itemVar = d[i][node1][node2]
-        return itemVar
+        if itemVar:
+            return itemVar
+        else:
+            return None
     except Exception as error:
         pass
 
@@ -65,7 +70,10 @@ def getItemsChildLevel_List(lengthList,node1,node2,iterationVal):
         itemVar =""
         for i in range(0,lengthList):
             itemVar = d[i][node1][iterationVal][node2]
-        return itemVar
+        if itemVar:
+            return itemVar
+        else:
+            return None
     except Exception as error:
         pass
 
@@ -75,7 +83,10 @@ def getItemsSubChildLevel(node1,node2,node3):
         lengthList = len(d)
         for i in range(0,lengthList):
             itemVar = d[i][node1][node2][node3]
-        return itemVar
+        if itemVar:
+            return itemVar
+        else:
+            return None
     except Exception as error:
         pass
 
@@ -84,7 +95,10 @@ def getItemsSubChildLevel_List(lengthList,node1,node2,node3,iterationVal):
         itemVar =""
         for i in range(0,lengthList):
             itemVar = d[i][node1][node2][iterationVal][node3]
-        return itemVar
+        if itemVar:
+            return itemVar
+        else:
+            return None
     except Exception as error:
         pass
 
@@ -96,6 +110,8 @@ def getProjectName():
         project_name = getItemsChildLevel("project","name")
     except Exception as error:
         pass
+    else:
+        return project_name
 
 def getProjectDetails():
     try:
@@ -124,8 +140,8 @@ def getProjectDetails():
         # --------------------------------------------------------
         # Insert data to location table and get location id
         # --------------------------------------------------------
-        start_date = datetime.datetime.strptime(project_start_date,'%m%d%Y').date().strftime('%Y%m%d')
-        end_date = datetime.datetime.strptime(project_end_date,'%m%d%Y').date().strftime('%Y%m%d')
+        start_date = util.formatDate(project_start_date)
+        end_date = util.formatDate(project_end_date)
 
         execSQL = ('insert_location_data')
         execData = (proj_loc_street, project_loc_city, project_loc_state, project_loc_country,None, None)
@@ -144,9 +160,10 @@ def getProjectDetails():
     except Exception as error:
         print("Error %s " % error)
         raise
+    else:
+        connObj.close()
     finally:
-        if (connObj):
-            connObj.close()
+        print("getProjectDetails")
 
 # -------------- Function to get the contractor details -----OLD CODE------------------
 def getContractorDetails():
@@ -177,9 +194,10 @@ def getContractorDetails():
     except Exception as error:
         print("Error %s " % error)
         raise
+    else:
+        connObj.close()
     finally:
-        if connObj is not None:
-            connObj.close()
+        print("getContractorDetails")
 
 # -------------- Function to get the contractor details -----OLD CODE ENDS---------------
 
@@ -208,9 +226,10 @@ def getContractorDetails_List():
     except Exception as error:
         print("Error %s " % error)
         raise
+    else:
+        connObj.close()
     finally:
-        if connObj is not None:
-            connObj.close()
+        print("getContractorDetails_List")
 
 def getContractorDetails_Dict():
     try:
@@ -236,9 +255,10 @@ def getContractorDetails_Dict():
     except Exception as error:
         print("Error %s " % error)
         raise
+    else:
+        connObj.close()
     finally:
-        if connObj is not None:
-            connObj.close()
+        print("getContractorDetails_Dict")
 
 
 # -------------- Function to get the Material details -----------------------
@@ -419,10 +439,10 @@ def writeActivitiesData_MultipleActivities(project_id):
             # --------------------------------------------------------
             # Insert data to project and location table
             # --------------------------------------------------------
-            planned_start = datetime.datetime.strptime(activities_planned_start, '%m%d%Y').date().strftime('%Y%m%d')
-            planned_end = datetime.datetime.strptime(activities_planned_end, '%m%d%Y').date().strftime('%Y%m%d')
-            actual_start = datetime.datetime.strptime(activities_actual_start, '%m%d%Y').date().strftime('%Y%m%d')
-            actual_end = datetime.datetime.strptime(activities_actual_end, '%m%d%Y').date().strftime('%Y%m%d')
+            planned_start = util.formatDate(activities_planned_start)
+            planned_end = util.formatDate(activities_planned_end)
+            actual_start = util.formatDate(activities_actual_start)
+            actual_end = util.formatDate(activities_actual_end)
             prj_name = getProjectName()
 
             execSQL = ('insert_activities_data')
@@ -450,9 +470,10 @@ def writeActivitiesData_MultipleActivities(project_id):
     except Exception as error:
         print("Error %s " % error)
         raise
+    else:
+        connObj.close()
     finally:
-        if connObj is not None:
-            connObj.close()
+        print("writeActivitiesData_MultipleActivities")
 
 def getItems_MultiBundle_MultiActivity(node1,node2,node3,iterationVal_h,iterationVal_i):
     try:
@@ -460,10 +481,15 @@ def getItems_MultiBundle_MultiActivity(node1,node2,node3,iterationVal_h,iteratio
         for i in range(0,len(d)):
             itemVar = d[i][node1][iterationVal_h][node2][iterationVal_i][node3]
             #print(itemVar)
-        return itemVar
+        if itemVar:
+            return itemVar
+        else:
+            return None
     except Exception as error:
         print("Error %s " % error)
         raise
+    finally:
+        print("getItems_MultiBundle_MultiActivity")
 
 def writeActivitiesData_MultiBundles_MultipleActivities(bundle_item, project_id):
     try:
@@ -512,10 +538,10 @@ def writeActivitiesData_MultiBundles_MultipleActivities(bundle_item, project_id)
            # --------------------------------------------------------
            # Insert data to project and location table
            # --------------------------------------------------------
-           planned_start = datetime.datetime.strptime(activities_planned_start, '%m%d%Y').date().strftime('%Y%m%d')
-           planned_end = datetime.datetime.strptime(activities_planned_end, '%m%d%Y').date().strftime('%Y%m%d')
-           actual_start = datetime.datetime.strptime(activities_actual_start, '%m%d%Y').date().strftime('%Y%m%d')
-           actual_end = datetime.datetime.strptime(activities_actual_end, '%m%d%Y').date().strftime('%Y%m%d')
+           planned_start = util.formatDate(activities_planned_start)
+           planned_end = util.formatDate(activities_planned_end)
+           actual_start = util.formatDate(activities_actual_start)
+           actual_end = util.formatDate(activities_actual_end)
            prj_name = getProjectName()
 
            execSQL = ('insert_activities_data')
@@ -542,9 +568,10 @@ def writeActivitiesData_MultiBundles_MultipleActivities(bundle_item, project_id)
     except Exception as error:
         print("Error %s " % error)
         raise
+    else:
+        connObj.close()
     finally:
-        if connObj is not None:
-            connObj.close()
+        print("writeActivitiesData_MultiBundles_MultipleActivities")
 
 
 # -----------------------------------------------------------#
@@ -557,10 +584,15 @@ def getwriteBundleList_DictActivity(node1,node2,node3,iterationVal):
         itemVar = ""
         for i in range(0, len(d)):
             itemVar = d[i][node1][iterationVal][node2][node3]
-        return itemVar
+        if itemVar:
+            return itemVar
+        else:
+            return None
     except Exception as error:
         print("Error %s " % error)
         raise
+    finally:
+        print("getwriteBundleList_DictActivity")
 
 def writeBundleList_DictActivity(bundle_item, project_id):
     try:
@@ -598,10 +630,10 @@ def writeBundleList_DictActivity(bundle_item, project_id):
         # --------------------------------------------------------
         # Insert data to project and location table
         # --------------------------------------------------------
-        planned_start = datetime.datetime.strptime(activities_planned_start, '%m%d%Y').date().strftime('%Y%m%d')
-        planned_end = datetime.datetime.strptime(activities_planned_end, '%m%d%Y').date().strftime('%Y%m%d')
-        actual_start = datetime.datetime.strptime(activities_actual_start, '%m%d%Y').date().strftime('%Y%m%d')
-        actual_end = datetime.datetime.strptime(activities_actual_end, '%m%d%Y').date().strftime('%Y%m%d')
+        planned_start = util.formatDate(activities_planned_start)
+        planned_end = util.formatDate(activities_planned_end)
+        actual_start = util.formatDate(activities_actual_start)
+        actual_end =util.formatDate(activities_actual_end)
         prj_name = getProjectName()
 
         execSQL = ('insert_activities_data')
@@ -619,6 +651,7 @@ def writeBundleList_DictActivity(bundle_item, project_id):
         print('Activity Name : %s' % activities_name)
         print('Activity Unit Name : %s' % activities_unit_name)
         print('Activity Material: %s' % activities_material)
+        print("Activities ID: %d" % activities_id)
         print('#####################')
     except psycopg2.DatabaseError as error:
         print("Database Error %s " % error)
@@ -626,10 +659,10 @@ def writeBundleList_DictActivity(bundle_item, project_id):
     except Exception as error:
         print("Error %s " % error)
         raise
+    else:
+        connObj.close()
     finally:
-        if connObj is not None:
-            connObj.close()
-
+        print("writeBundleList_DictActivity")
 
 # -----------------------------------------------------------#
 # This function is called when both bundles and activities   #
@@ -642,8 +675,8 @@ def writeBundle_Activity(project_id):
         ## Update the details to the database temp
         connObj = dbu.getConn()
 
-        bundles_name = getItemsChildLevel(len(d),"bundles","name")
-        bundles_phases = getItemsChildLevel(len(d), "bundles", "phases")
+        bundles_name = getItemsChildLevel("bundles","name")
+        bundles_phases = getItemsChildLevel( "bundles", "phases")
 
         execSQL = ('insert_bundles_data')
         execData = (None, bundles_name, project_id, None)
@@ -674,10 +707,10 @@ def writeBundle_Activity(project_id):
         # --------------------------------------------------------
         # Insert data to activities
         # --------------------------------------------------------
-        planned_start = datetime.datetime.strptime(activities_planned_start, '%m%d%Y').date().strftime('%Y%m%d')
-        planned_end = datetime.datetime.strptime(activities_planned_end, '%m%d%Y').date().strftime('%Y%m%d')
-        actual_start = datetime.datetime.strptime(activities_actual_start, '%m%d%Y').date().strftime('%Y%m%d')
-        actual_end = datetime.datetime.strptime(activities_actual_end, '%m%d%Y').date().strftime('%Y%m%d')
+        planned_start = util.formatDate(activities_planned_start)
+        planned_end = util.formatDate(activities_planned_end)
+        actual_start = util.formatDate(activities_actual_start)
+        actual_end = util.formatDate(activities_actual_end)
         prj_name = getProjectName()
 
         execSQL = ('insert_activities_data')
@@ -702,18 +735,19 @@ def writeBundle_Activity(project_id):
     except Exception as error:
         print("Error %s " % error)
         raise
+    else:
+        connObj.close()
     finally:
-        if connObj is not None:
-            connObj.close()
+        print("writeBundle_Activity")
 
 # -------------Main Program Starts --------#
 try:
     ## Read the JSON Stream from stdin
     jsonData = sys.stdin.buffer.read()
     d = json.loads(jsonData, object_pairs_hook=join_duplicate_keys)
-    #with open("./structural_data.json") as f:
-    #   # bundle all the duplicate keys into one
-    #    d = json.load(f, object_pairs_hook=join_duplicate_keys)
+    #with open("./str_data.json") as f:
+       # bundle all the duplicate keys into one
+     #   d = json.load(f, object_pairs_hook=join_duplicate_keys)
     print(d)
 except ValueError as ve:
     traceback.print_exc()
@@ -721,6 +755,8 @@ except ValueError as ve:
 except Exception as error:
     print("Error %s " % error)
     raise
+finally:
+    print("Read JSON data")
 
 # Now read each value inside the bundle and the iteration value
 # first get the length of the bundle
@@ -814,8 +850,10 @@ except ValueError as ve:
     print("%s in %s at %d" % (ve, util.__FILE__(), util.__LINE__(),))
     traceback.print_exc()
     raise
-
-sys.exit(0)
+else:
+    sys.exit(0)
+finally:
+    print("Finished output")
 
 '''
 def main(args):
