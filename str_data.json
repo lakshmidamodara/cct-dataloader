@@ -1,0 +1,101 @@
+[
+    {
+        "project":{
+        "name" : "Bayshore-A",
+        "start" : "04192018",
+        "end": "08212018",
+        "workdays":["M","T","W","Th","F"],
+        "budget":"400",
+        "location":{
+            "street1":"231, 1st cross",
+            "street2":"Suite 2",
+            "city":"Long Beach",
+            "state":"CA",
+            "postal":"20134",
+            "country":"USA"
+            }
+        },
+        "bundles":[{
+        "name" : "Mechanical",
+        "phase" : "Origination",
+        "activities": [
+            {
+            "name":"Pile Installation",
+            "contractor": "Arraycon",
+            "total_planned_hours":"",
+            "total_planned_units":"",
+            "planned_start":"",
+            "planned_end":"",
+            "actual_start":"",
+            "actual_end":"",
+            "unit": {
+                "name": "Rows"
+            },
+            "material": "Material"
+            },
+            {
+            "name":"Torque Row Installed",
+            "contractor": "Sacramento Drilling",
+            "total_planned_hours":"",
+            "total_planned_units":"",
+            "planned_start":"",
+            "planned_end":"",
+            "actual_start":"",
+            "actual_end":"",
+            "unit": {
+                "name": "piles"
+            },
+            "material": "Material"
+            }
+        ]},
+        {
+        "name" : "Electrical",
+        "phase" : "Origination",
+        "activities":[{
+            "name":"LGH",
+            "contractor": "GKM",
+            "total_planned_hours":"",
+            "total_planned_units":"",
+            "planned_start":"",
+            "planned_end":"",
+            "actual_start":"",
+            "actual_end":"",
+            "unit": {
+                "name": "Rows"
+            },
+            "material": "Material"
+            },
+            {
+            "name":"LA",
+            "contractor": "SK",
+            "total_planned_hours":"",
+            "total_planned_units":"",
+            "planned_start":"",
+            "planned_end":"",
+            "actual_start":"",
+            "actual_end":"",
+            "unit": {
+                "name": "piles"
+            },
+            "material": "Material"
+            }
+        ],
+        "contractors":[{
+            "name":"Arraycon",
+            "email": "arraycon@gmail.com",
+            "phone":"6461241234",
+            "primary_contact":"6461234567"
+        }],
+        "materials":[{
+            "name":"",
+            "planned_delivery": "",
+            "actual_delivery":"",
+            "unit_cost":""
+        }],
+        "incidents":[{
+            "date":"",
+            "type": "IncidentType",
+            "class":"IncidentClass",
+            "contractor":"Contractor"
+        }]
+}]
