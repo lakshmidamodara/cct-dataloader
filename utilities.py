@@ -7,6 +7,7 @@ Description    : This program is for all general purpose tools
 '''
 
 import inspect
+import datetime
 
 def __LINE__():
     callerframerecord = inspect.stack()[1]
@@ -28,3 +29,12 @@ class DLException(Exception):
         self.line = lineno
     def __str__(self):
         return str("%s in %s at lineNo %d" %(self.value, self.name, self.line) )
+
+
+def formatDate(var):
+    if var and var is not None:
+        val = datetime.datetime.strptime(var, '%m%d%Y').date().strftime('%Y%m%d')
+    else:
+        val = None
+
+    return val
