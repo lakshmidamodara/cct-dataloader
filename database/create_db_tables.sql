@@ -338,6 +338,62 @@ END; $$;
 
 
 --
+-- 
+-- Name: insert_portfolios_data("text", integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE OR REPLACE FUNCTION insert_portfolios_data(p_name text, p_id integer)
+RETURNS INTEGER AS $$
+DECLARE
+	l_portfolio_id INTEGER;
+BEGIN
+	SELECT id INTO STRICT l_portfolio_id
+	FROM public.portfolios AS u
+	WHERE
+		UPPER(u.name) IS NOT DISTINCT FROM UPPER(p_name);
+    
+	RETURN l_portfolio_id;
+		
+	EXCEPTION
+		WHEN NO_DATA_FOUND THEN
+			INSERT INTO public.portfolios (name) VALUES (p_name);
+			RETURN CURRVAL('public.portfolios_id_seq');
+		WHEN TOO_MANY_ROWS THEN
+			RAISE EXCEPTION 'Found more than one row in portfolios for name %', p_name;
+   
+END; $$
+LANGUAGE plpgsql;
+
+--
+-- 
+-- Name: insert_portfolio_projects_data(integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE OR REPLACE FUNCTION insert_portfolio_projects_data(p_portfolio_id integer, p_project_id integer)
+RETURNS INTEGER AS $$
+DECLARE
+	l_portfolio_project_id INTEGER;
+BEGIN
+	SELECT id INTO STRICT l_portfolio_project_id
+	FROM public.portfolio_projects AS u
+	WHERE
+		u.portfolio_id IS NOT DISTINCT FROM p_portfolio_id
+		AND u.project_id IS NOT DISTINCT FROM p_project_id
+		;
+    
+	RETURN l_portfolio_project_id;
+		
+	EXCEPTION
+		WHEN NO_DATA_FOUND THEN
+			INSERT INTO public.portfolio_projects (portfolio_id, project_id) VALUES (p_portfolio_id, p_project_id);
+			RETURN CURRVAL('public.portfolio_projects_id_seq');
+		WHEN TOO_MANY_ROWS THEN
+			RAISE EXCEPTION 'Found more than one row in portfolio_projects for project_id %', p_project_id;
+   
+END; $$
+LANGUAGE plpgsql;
+
+--
 -- TOC entry 263 (class 1255 OID 25284)
 -- Name: insert_project_data("text", "date", "date", "json", integer, "text", integer, bigint); Type: FUNCTION; Schema: public; Owner: -
 --
