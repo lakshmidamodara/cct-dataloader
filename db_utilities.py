@@ -76,7 +76,7 @@ def updateFileObjectIntoDB( conn, wb, L_FileName,load_type):
                           filedata = {data},
                           updated = current_timestamp(2) 
                     where load_type = '{type}'; """
-        execSQL = execSQL.format(fileName = L_FileName, data = psycopg2.Binary(save_virtual_workbook(wb)), type = load_type)
+        execSQL = execSQL.format(fileName = L_FileName, data = psycopg2.Binary(wb), type = load_type)
         executeQuery(conn, execSQL)
     except (Exception, psycopg2.DatabaseError) as error:
         print("Database Error %s " % error)

@@ -19,10 +19,31 @@ getSheetResult(), remove_item_list(), ConvertDate()
 
 import datetime
 import excel_config_reader as efcr
+import string
+import xlrd
 
 print('##---Program: excel_utilities..........................')
 print(datetime.datetime.today())
 print('##---------------------------------------------........')
+
+def getLowerAlphabetDictionary():
+    letter_count = dict(zip(string.ascii_lowercase, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25] * 26))
+    return letter_count
+
+def getUpperAlphabetDictionary():
+    letter_count = dict(zip(string.ascii_uppercase, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25] * 26))
+    return letter_count
+
+def getRowColumn(strVal):
+    rowCol = []
+    Tcol = strVal[0] #get the first character from the string: eg: if strVal = A5 -> 'A' is selected
+    T1col = getUpperAlphabetDictionary() # get the corresponding key value from the function
+    col = T1col[Tcol] # assign the key to the col index value: eg) A5 -> 0
+    Trow = int(strVal[1:]) # getting the rest of the string value after the first
+    row = Trow -1
+    rowCol.append(row)
+    rowCol.append(col)
+    return rowCol
 
 def remove_items_list(listVar,removeListVar):
     # remove the unnecessary values from the result data
@@ -33,18 +54,24 @@ def remove_items_list(listVar,removeListVar):
 def convertDate(dtt):
     return datetime.datetime.date(dtt) # returns just the date in mm-dd-yyyy format
 
-#---------------------------------------------------------------------------
+def getMaxRowInSheet(wb,sheet,sheet_val):
+    mrow = 0
+    for sheet in wb.sheets():
+        for row in range(sheet.nrows):
+           mrow = row
+    return mrow
+
+#-----------------------------------------------------------------
 # This function contains the business logic to read the daily activity sheet
 #----------------------------------------------------------------------------
 def getSheetResult(wbe,active_sheet_value):
-    sName = efcr.shName(active_sheet_value)  # get the sheet name
-    Asheet = wbe[sName]
+    Asheet = efcr.shName(active_sheet_value)  # get the sheet name
+    print('Sheet Name = %s' %Asheet)
+    #Asheet = wbe.cell_value[sName]
 
-   # get the max count of rows and cols
-    m_row = Asheet.max_row
-    #m_col = Asheet.max_column
-    m_row = m_row + 1
-
+    # get the max count of rows and cols
+    maxrow = getMaxRowInSheet(wbe,Asheet,active_sheet_value)
+    activesheet = wbe.sheet_by_name(Asheet)
     # -- This section is to store the data of the active sheet in to List of Lists
     # -- result_data is the list of list containing : rows and columns of the active sheet
     # -- The reading of row starts at Row# 7 and 6 columns are read starting from column # 2
@@ -53,16 +80,20 @@ def getSheetResult(wbe,active_sheet_value):
 
     # initialize list
     result_data = []
-    for curr_row in range(7, m_row, 1):
-        if not Asheet.row_dimensions[curr_row].hidden == True:  # dont read if the row is hidden
-            row_data = []
-            row_data.append(sName) # inserting the activity name
-            for curr_col in range(2, 8, 1): # read each col. from the sheet starting from col number 2 upto col 8
-                data = Asheet.cell(row=curr_row, column=curr_col)
-                if isinstance(data.value, datetime.datetime): # getting the date value and converting to mmddyyyy format value
-                    row_data.append(convertDate(data.value).strftime('%m%d%Y')) # inserting the value to row_data
-                else:
-                    row_data.append(data.value) # inserting the rest of the values
+    for curr_row in range(7, maxrow, 1):
+        #if not Asheet.Rowinfo.hidden == True:  # dont read if the row is hidden
+        row_data = []
+        row_data.append(Asheet) # inserting the activity name
+        for curr_col in range(1, 7, 1): # read each col. from the sheet starting from col number 2 upto col 8
+           data = activesheet.cell(curr_row,curr_col)
+           # xlrd receives the date in float format, so that need to be properly re-calibrated
+           # or checked using the below statement.
+           if str(data).split(':')[0] == 'xldate':
+                # getting the date value and converting to mmddyyyy format value
+                dateT = datetime.datetime(*xlrd.xldate_as_tuple(data.value, wbe.datemode))
+                row_data.append(convertDate(dateT).strftime('%m%d%Y')) # inserting the value to row_data
+           else:
+                row_data.append(data.value) # inserting the rest of the values
 
         result_data.append(row_data) # inserting the row_data into result_data list
 
@@ -89,7 +120,7 @@ def getSheetResult(wbe,active_sheet_value):
     popping_Var_None = []
     ## Now accessing the list of list result_data with None Value
     for i in range(0, len(result_data), 1):
-        if result_data[i][5] == None: # checking if the list index[5] in result_data is None
+        if result_data[i][5] == '': # checking if the list index[5] in result_data is None
             popping_Var_None.append(i) # store the index value in popping_Var_None list
 
     # Call the function to remove the list containing None or null values as referenced in popping_Var_None

@@ -66,7 +66,7 @@ def processBaselineActivity_data(wb, efcr, eut, dbh):
     Lsqlquery = "TRUNCATE TABLE temp.activity_data"
     dbh.executeQuery(db_conn, Lsqlquery)
 
-    asheets = efcr.getActivitySheets() # get the list of activity sheets from excel_file_config.ini
+    asheets = efcr.getActivitySheets() # get the list of activity sheets from excel_activity_config.ini
     len_asheets = len((asheets))
     for i in range(0,len_asheets,2):
         sheet_val = asheets[i] # getting the active worksheet number
@@ -78,7 +78,7 @@ def processBaselineActivity_data(wb, efcr, eut, dbh):
 
     dbh.executeQuery(db_conn, "SELECT update_baseline_activity_data()")
     # close all the connections
-    wb.close()
+    #wb.close()
     # close or delete all the open instances, Lists, and connections
     # clears all the variables from memory
 

@@ -15,10 +15,12 @@ Output File
 
 '''
 
-import openpyxl
 import configparser
 import datetime
-import psycopg2
+import sys
+import base64
+import io
+import xlrd
 
 #import excel_writing as ewWriter
 import excel_utilities as eut
@@ -34,12 +36,12 @@ print('##---Program: production_dataloader.py..........................')
 print(datetime.datetime.today())
 print('##-----------------------------------------------------........')
 
-# get the filename and directory : Excel fileName and directory for reading values
-L_FileName = efcr.fileDirectory() + efcr.fileName() # directory + filename
-print('production_activity_data.py : opening excel file name - %s'%L_FileName)
-# passing the file name and creating an instance of the workbook with actual values and ignoring the formulas
-wb = openpyxl.load_workbook(L_FileName,data_only='True')
+streamData = sys.stdin.read()
+decodedData = base64.b64decode(streamData)
+excelData = io.BytesIO(decodedData)
 
+wb = xlrd.open_workbook(file_contents=excelData.getvalue())
+#wb = xlrd.open_workbook('Bayshore A-Mechanical Tracker v5.xlsx')
 
 # open the config parser to read the activities config file
 config = configparser.ConfigParser()
@@ -54,9 +56,8 @@ prod_act.processProductionActivities(wb, efcr, eut, dbh, config)
 prod_act_data.processProductionActivity_data(wb, efcr, eut, dbh)
 
 # update file_storage in db
-dbh.updateFileObjectIntoDB(dbh, wb, L_FileName, 'Production')
+dbh.updateFileObjectIntoDB(dbh, excelData.getvalue(), 'Streaming content for Actuals Data', 'Production')
 
-wb.close()
 del efcr
 del eut
 del dbh

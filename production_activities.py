@@ -30,6 +30,8 @@ Log File
 
 import datetime
 #import psycopg2
+import xlrd
+
 
 ### -- Start of Functions --------
 # function to convert dates to string in mmddyyyy format
@@ -123,7 +125,7 @@ def processProductionActivities(act_wb, efcr_activities, eut, dbh, config):
     ## Open db connection
     db_conn = dbh.getConn()
     # getting the active worksheet
-    wrksheet_names = act_wb.sheetnames
+    wrksheet_names = act_wb.sheet_names()
 
     L_result_data_sheet = []
     L_actual_start_date = []
@@ -150,10 +152,10 @@ def processProductionActivities(act_wb, efcr_activities, eut, dbh, config):
     #logging.debug('Entering into For loop to get values from excel sheet')
 
     # get the active sheet
-    activityName_active_sheet = wrksheet_names[0]
+    ####activityName_active_sheet = wrksheet_names[0]
+    sheet = act_wb.sheet_by_index(0)
     # pass the active sheet name
-    sheet = act_wb[activityName_active_sheet]
-
+    ####sheet = act_wb[activityName_active_sheet]
     L1 = []
 
     #-----------------------------------------
@@ -166,28 +168,55 @@ def processProductionActivities(act_wb, efcr_activities, eut, dbh, config):
     #  Getting the project Name from the sheet
     #------------------------------------------
     projectName_cell = getProjectName(config)
-    projectName = sheet[projectName_cell].value
+    # reading the cell address and getting the value in rows,columns
+    projectName_position = eut.getRowColumn(projectName_cell)
+    # getting the project name
+    projectName = sheet.cell_value(projectName_position[0], projectName_position[1])
     print(projectName)
 
     # -------------------------------------------------------------
     # Getting other values from the worksheet
     #--------------------------------------------------------------
     for i in range(0,int(tot_activity)):
-        L_activityName_cell_value = sheet[getActivityNameCellPosition(config, i)]
-        L_activities_unit_name_cell_value = sheet[getUnitNameCellPosition(config,i)]
-        L_activities_contractor_name_cell_value = sheet[getContractorNameCellPosition(config,i)]
-        LC_activities_planned_start_cell_value = sheet[getPlannedStartCellPosition(config,i)]
-        L_activities_planned_start_date = convertDate(LC_activities_planned_start_cell_value.value).strftime('%m%d%Y')
-        LC_activities_planned_end_cell_value = sheet[getPlannedEndCellPosition(config,i)]
-        L_activities_planned_end_date = convertDate(LC_activities_planned_end_cell_value.value).strftime('%m%d%Y')
+
+        # getting activity name
+        ancp = getActivityNameCellPosition(config, i)
+        acrc = eut.getRowColumn(ancp)
+        L_activityName_cell_value = sheet.cell_value(acrc[0], acrc[1])
+
+        # getting unit name
+        auncp = getUnitNameCellPosition(config, i)
+        aunrc = eut.getRowColumn(auncp)
+        L_activities_unit_name_cell_value = sheet.cell_value(aunrc[0], aunrc[1])
+
+        # getting the contractor name
+        acncp = getContractorNameCellPosition(config, i)
+        acnrc = eut.getRowColumn(acncp)
+        L_activities_contractor_name_cell_value = sheet.cell_value(acnrc[0], acnrc[1])
+
+        # getting the planned start date
+        apscp = getPlannedStartCellPosition(config, i)
+        apscrc = eut.getRowColumn(apscp)
+        a1 = sheet.cell_value(apscrc[0], apscrc[1])
+        a1_as_datetime = datetime.datetime(*xlrd.xldate_as_tuple(a1, act_wb.datemode))
+        L_activities_planned_start_date = convertDate(a1_as_datetime).strftime('%m%d%Y')
+
+        # getting the planned end date
+        apecp = getPlannedEndCellPosition(config, i)
+        apecrc = eut.getRowColumn(apecp)
+        a1 = sheet.cell_value(apecrc[0], apecrc[1])
+        a1_as_datetime = datetime.datetime(*xlrd.xldate_as_tuple(a1, act_wb.datemode))
+        L_activities_planned_end_date = convertDate(a1_as_datetime).strftime('%m%d%Y')
+
+        # getting the actual start and actual end date
         L_activities_actual_start_date = L_actual_start_date[i]
         L_activities_actual_end_date = L_actual_end_date[i]
 
         # Depending on the number of activities, the if loop will load the list
         j = i - 1
-        L1.insert(j,L_activityName_cell_value.value)
-        L1.insert(incrementfnc(j+1),L_activities_unit_name_cell_value.value)
-        L1.insert(incrementfnc(j+2),L_activities_contractor_name_cell_value.value)
+        L1.insert(j,L_activityName_cell_value)
+        L1.insert(incrementfnc(j+1),L_activities_unit_name_cell_value)
+        L1.insert(incrementfnc(j+2),L_activities_contractor_name_cell_value)
         L1.insert(incrementfnc(j+3),L_activities_planned_start_date)
         L1.insert(incrementfnc(j+4),L_activities_planned_end_date)
         L1.insert(incrementfnc(j+5),L_activities_actual_start_date)
@@ -196,8 +225,6 @@ def processProductionActivities(act_wb, efcr_activities, eut, dbh, config):
         final_list = [L1]
 
         # output file
-        #output_FileName1 = outfileDir(config) + str(outfile(config))
-        #output_FileName = output_FileName1.replace("'","")
         # Now pass the list along with filename to the writer python file
         #eut.writeCSVFile(output_FileName,final_list)
         updateProductionActivities(dbh, db_conn, final_list)

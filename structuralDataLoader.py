@@ -113,7 +113,33 @@ def getProjectName():
     else:
         return project_name
 
-def getProjectDetails():
+def getPortfolioDetails():
+        portfolio_name = "Default"
+        try:
+            ## Update the details to the database temp
+            connObj = dbu.getConn()
+
+            # --------------------------------------------------------
+            # Insert data to profolios table
+            # --------------------------------------------------------
+
+            execSQL = ('insert_portfolios_data')
+            execData = (portfolio_name,0)
+            portfolio_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
+            return portfolio_id
+        except psycopg2.DatabaseError as error:
+            print("Database Error %s " % error)
+            raise
+        except Exception as error:
+            print("Error %s " % error)
+            raise
+        else:
+            connObj.close()
+        finally:
+            print("getPortfolioDetails")
+
+
+def getProjectDetails(portfolio_id):
     try:
         # Get the project level details from the json file
         project_name = getItemsChildLevel("project", "name")
@@ -152,6 +178,11 @@ def getProjectDetails():
         execSQL = ('insert_project_data')
         execData = (project_name, start_date, end_date, json.dumps(project_workdays),int(project_budget),None, project_loc_id, None)
         project_id = dbu.fetchStoredFuncRes(connObj, execSQL,execData)[0]
+
+        ## create a row in portfolio_projects to tie both portfolio and the project
+        execSQL = ('insert_portfolio_projects_data')
+        execData = (portfolio_id, project_id)
+        portfolio_project_id = dbu.fetchStoredFuncRes(connObj, execSQL, execData)[0]
 
         return project_id
     except psycopg2.DatabaseError as error:
@@ -743,7 +774,7 @@ def writeBundle_Activity(project_id):
 # -------------Main Program Starts --------#
 try:
     ## Read the JSON Stream from stdin
-    jsonData = sys.stdin.buffer.read()
+    jsonData = sys.stdin.read()
     d = json.loads(jsonData, object_pairs_hook=join_duplicate_keys)
     #with open("./str_data.json") as f:
        # bundle all the duplicate keys into one
@@ -765,6 +796,7 @@ finally:
 
 try:
     # first get each item from the list
+
     item_project = getItemsParentLevel(len(d),"project")
     item_bundles = getItemsParentLevel(len(d),"bundles")
     item_contractors = getItemsParentLevel(len(d),"contractors")
@@ -783,8 +815,11 @@ try:
             #print(item_activities)
             #print(type(item_activities))
 
+    #--- get Portfolio details ---
+    portfolio_id = getPortfolioDetails()
+
     # --- get all the project details ---
-    project_id = getProjectDetails()
+    project_id = getProjectDetails(portfolio_id)
 
     # -- Main Fn() get all the contractor details ---
     if type(item_contractors)== list:
@@ -851,9 +886,17 @@ except ValueError as ve:
     traceback.print_exc()
     raise
 else:
+    ##prep_file_storage
+    #connObj = dbu.getConn()
+    #LsqlQuery = "select public.prep_file_storage()"
+    #dbu.executeQuery(connObj, LsqlQuery )
+    # update file_storage in db
+    #dbu.updateFileObjectIntoDB(dbu, jsonData, 'Streaming content for BaselineData', 'Structural')
+    #connObj.close()
     sys.exit(0)
 finally:
     print("Finished output")
+
 
 '''
 def main(args):
