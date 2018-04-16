@@ -1500,6 +1500,7 @@ SET search_path = "temp", pg_catalog;
 --
 
 CREATE TABLE "activities" (
+	"id" "integer",
     "name" "text",
     "contractor_name" "text",
     "unit_cost" double precision,
@@ -1522,6 +1523,7 @@ CREATE TABLE "activities" (
 --
 
 CREATE TABLE "activity_data" (
+	"id" "integer",
     "activity_name" "text",
     "date" "date",
     "actual_hours" integer,
@@ -1539,6 +1541,7 @@ CREATE TABLE "activity_data" (
 --
 
 CREATE TABLE "contractors" (
+	"id" "integer",
     "name" "text",
     "email" "text",
     "phone" "text",
@@ -1552,6 +1555,7 @@ CREATE TABLE "contractors" (
 --
 
 CREATE TABLE "projects" (
+	"id" "integer",
     "name" "text",
     "start_dt" "date",
     "end_dt" "date",
@@ -1569,6 +1573,7 @@ CREATE TABLE "projects" (
 --
 
 CREATE TABLE "units" (
+	"id" "integer",
     "name" "text"
 );
 
@@ -1928,6 +1933,11 @@ ALTER TABLE ONLY "projects"
 --
 
 GRANT ALL ON SCHEMA "public" TO PUBLIC;
+
+-- Prep file_storage
+INSERT INTO public.file_storage (load_type, filename) VALUES ( 'Structural', NULL);
+INSERT INTO public.file_storage (load_type, filename) VALUES ( 'Baseline', NULL);
+INSERT INTO public.file_storage (load_type, filename) VALUES ( 'Production', NULL);
 
 
 -- Completed on 2018-03-08 19:24:58
