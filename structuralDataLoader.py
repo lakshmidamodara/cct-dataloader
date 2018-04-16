@@ -776,9 +776,9 @@ try:
     ## Read the JSON Stream from stdin
     jsonData = sys.stdin.read()
     d = json.loads(jsonData, object_pairs_hook=join_duplicate_keys)
-    #with open("./str_data.json") as f:
-       # bundle all the duplicate keys into one
-     #   d = json.load(f, object_pairs_hook=join_duplicate_keys)
+    #with open("./structural_data.json") as f:
+        #Sbundle all the duplicate keys into one
+        #d = json.load(f, object_pairs_hook=join_duplicate_keys)
     print(d)
 except ValueError as ve:
     traceback.print_exc()
@@ -886,13 +886,11 @@ except ValueError as ve:
     traceback.print_exc()
     raise
 else:
-    ##prep_file_storage
-    #connObj = dbu.getConn()
-    #LsqlQuery = "select public.prep_file_storage()"
-    #dbu.executeQuery(connObj, LsqlQuery )
+    ## insert file_storage
+    connObj = dbu.getConn()
     # update file_storage in db
-    #dbu.updateFileObjectIntoDB(dbu, jsonData, 'Streaming content for BaselineData', 'Structural')
-    #connObj.close()
+    dbu.updateFileObjectIntoDB(dbu, str(d).encode(), 'Streaming content for BaselineData', 'Structural')
+    connObj.close()
     sys.exit(0)
 finally:
     print("Finished output")
