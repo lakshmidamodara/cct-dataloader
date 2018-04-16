@@ -1500,7 +1500,7 @@ SET search_path = "temp", pg_catalog;
 --
 
 CREATE TABLE "activities" (
-	"id" "integer",
+	"id" integer,
     "name" "text",
     "contractor_name" "text",
     "unit_cost" double precision,
@@ -1523,7 +1523,7 @@ CREATE TABLE "activities" (
 --
 
 CREATE TABLE "activity_data" (
-	"id" "integer",
+	"id" integer,
     "activity_name" "text",
     "date" "date",
     "actual_hours" integer,
@@ -1541,7 +1541,7 @@ CREATE TABLE "activity_data" (
 --
 
 CREATE TABLE "contractors" (
-	"id" "integer",
+	"id" integer,
     "name" "text",
     "email" "text",
     "phone" "text",
@@ -1555,7 +1555,7 @@ CREATE TABLE "contractors" (
 --
 
 CREATE TABLE "projects" (
-	"id" "integer",
+	"id" integer,
     "name" "text",
     "start_dt" "date",
     "end_dt" "date",
@@ -1573,7 +1573,7 @@ CREATE TABLE "projects" (
 --
 
 CREATE TABLE "units" (
-	"id" "integer",
+	"id" integer,
     "name" "text"
 );
 
