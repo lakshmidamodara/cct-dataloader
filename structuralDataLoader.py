@@ -774,6 +774,16 @@ def writeBundle_Activity(project_id):
     finally:
         print("writeBundle_Activity")
 
+
+def findKeyOccurence(listItem):
+    prjLen = 0
+    for track in listItem:
+        if 'project' in track.keys():
+            prjLen += 1
+
+    print(prjLen)
+    return prjLen
+
 # -------------Main Program Starts --------#
 try:
     ## Read the JSON Stream from stdin
@@ -802,7 +812,11 @@ try:
     for listitems in range(0, len(fileText)):
         d = []
         # first get each item from the list
-        d = fileText[listitems]
+        d.append(fileText[listitems])
+        print(d)
+        print(type(d))
+        occ = findKeyOccurence(d)
+
         item_project = getItemsParentLevel(len(d),"project")
         item_bundles = getItemsParentLevel(len(d),"bundles")
         item_contractors = getItemsParentLevel(len(d),"contractors")
