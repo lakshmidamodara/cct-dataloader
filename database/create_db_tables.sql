@@ -22,7 +22,7 @@ DROP DATABASE IF EXISTS "cct";
 -- Name: cct; Type: DATABASE; Schema: -; Owner: -
 --
 
-CREATE DATABASE "cct" WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'English_United Kingdom.1252' LC_CTYPE = 'English_United Kingdom.1252';
+CREATE DATABASE "cct" WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'en_US.UTF-8' LC_CTYPE = 'en_US.UTF-8';
 
 
 \connect "cct"
@@ -108,53 +108,100 @@ END; $$;
 
 CREATE FUNCTION "insert_activities_data"("p_name" "text", "p_unit_id" integer, "p_contractor_name" "text", "p_unit_cost" double precision, "p_total_planned_hours" integer, "p_phase_id" integer, "p_project_id" integer, "p_total_planned_units" bigint, "p_planned_start" "date", "p_planned_end" "date", "p_unit_name" "text", "p_actual_start" "date", "p_actual_end" "date", "p_hourly_cost" double precision) RETURNS integer
     LANGUAGE "plpgsql"
-    AS $$
-DECLARE 
-	l_contractor_id INTEGER;
-	l_activity_id INTEGER;
-BEGIN
-	
-	SELECT id into l_contractor_id 
-	  FROM public.contractors AS con 
-	 WHERE 
-		upper(con.name) IS NOT DISTINCT FROM upper(p_contractor_name);
-	
-	SELECT id INTO STRICT l_activity_id
-	FROM public.activities AS act
-	WHERE
-		UPPER(act.name) IS NOT DISTINCT FROM UPPER(p_name)
-		AND act.contractor_id IS NOT DISTINCT FROM l_contractor_id
-        AND act.unit_id IS NOT DISTINCT FROM p_unit_id
-		AND act.total_planned_hours IS NOT DISTINCT FROM p_total_planned_hours
-		AND act.project_id IS NOT DISTINCT FROM p_project_id
-		AND act.phase_id IS NOT DISTINCT FROM p_phase_id
-		AND act.total_planned_units IS NOT DISTINCT FROM p_total_planned_units
-		AND act.planned_start IS NOT DISTINCT FROM p_planned_start
-		AND act.planned_end IS NOT DISTINCT FROM p_planned_end
-		AND act.unit_name IS NOT DISTINCT FROM p_unit_name
-		AND act.actual_start IS NOT DISTINCT FROM p_actual_start
-		AND act.actual_end IS NOT DISTINCT FROM p_actual_end
-		AND act.hourly_cost IS NOT DISTINCT FROM p_hourly_cost
-		ORDER BY id;
-
-		RETURN l_activity_id;
-		
-		EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-				INSERT INTO public.activities (name, unit_id, contractor_id,
-												unit_cost, total_planned_hours,
-												phase_id, project_id,
-												total_planned_units, planned_start,
-												planned_end, unit_name,
-												actual_start, actual_end, 
-												hourly_cost) 
-				VALUES (p_name, p_unit_id, l_contractor_id, p_unit_cost, p_total_planned_hours,
-						p_phase_id, p_project_id, p_total_planned_units, p_planned_start,
-						p_planned_end, p_unit_name, p_actual_start, p_actual_end, p_hourly_cost);
-				RETURN CURRVAL('public.activities_id_seq');
-			WHEN TOO_MANY_ROWS THEN
-				RAISE EXCEPTION 'Found more than one row in activities for name %', p_name;
-   
+    AS $$
+
+DECLARE 
+
+	l_contractor_id INTEGER;
+
+	l_activity_id INTEGER;
+
+BEGIN
+
+	
+
+	SELECT id into l_contractor_id 
+
+	  FROM public.contractors AS con 
+
+	 WHERE 
+
+		upper(con.name) IS NOT DISTINCT FROM upper(p_contractor_name);
+
+	
+
+	SELECT id INTO STRICT l_activity_id
+
+	FROM public.activities AS act
+
+	WHERE
+
+		UPPER(act.name) IS NOT DISTINCT FROM UPPER(p_name)
+
+		AND act.contractor_id IS NOT DISTINCT FROM l_contractor_id
+
+        AND act.unit_id IS NOT DISTINCT FROM p_unit_id
+
+		AND act.total_planned_hours IS NOT DISTINCT FROM p_total_planned_hours
+
+		AND act.project_id IS NOT DISTINCT FROM p_project_id
+
+		AND act.phase_id IS NOT DISTINCT FROM p_phase_id
+
+		AND act.total_planned_units IS NOT DISTINCT FROM p_total_planned_units
+
+		AND act.planned_start IS NOT DISTINCT FROM p_planned_start
+
+		AND act.planned_end IS NOT DISTINCT FROM p_planned_end
+
+		AND act.unit_name IS NOT DISTINCT FROM p_unit_name
+
+		AND act.actual_start IS NOT DISTINCT FROM p_actual_start
+
+		AND act.actual_end IS NOT DISTINCT FROM p_actual_end
+
+		AND act.hourly_cost IS NOT DISTINCT FROM p_hourly_cost
+
+		ORDER BY id;
+
+
+
+		RETURN l_activity_id;
+
+		
+
+		EXCEPTION
+
+			WHEN NO_DATA_FOUND THEN
+
+				INSERT INTO public.activities (name, unit_id, contractor_id,
+
+												unit_cost, total_planned_hours,
+
+												phase_id, project_id,
+
+												total_planned_units, planned_start,
+
+												planned_end, unit_name,
+
+												actual_start, actual_end, 
+
+												hourly_cost) 
+
+				VALUES (p_name, p_unit_id, l_contractor_id, p_unit_cost, p_total_planned_hours,
+
+						p_phase_id, p_project_id, p_total_planned_units, p_planned_start,
+
+						p_planned_end, p_unit_name, p_actual_start, p_actual_end, p_hourly_cost);
+
+				RETURN CURRVAL('public.activities_id_seq');
+
+			WHEN TOO_MANY_ROWS THEN
+
+				RAISE EXCEPTION 'Found more than one row in activities for name %', p_name;
+
+   
+
 END; $$;
 
 
@@ -188,27 +235,48 @@ END; $$;
 
 CREATE FUNCTION "insert_bundles_data"("p_parent_bundle_id" integer, "p_name" "text", "p_project_id" integer, "p_title" "text") RETURNS integer
     LANGUAGE "plpgsql"
-    AS $$
-DECLARE
-	l_bundle_id INTEGER;
-BEGIN
-	SELECT id INTO STRICT l_bundle_id
-	FROM public.bundles AS bun
-	WHERE
-		UPPER(bun.name) IS NOT DISTINCT FROM UPPER(p_name)
-        AND bun.parent_bundle_id IS NOT DISTINCT FROM p_parent_bundle_id 
-		AND bun.project_id IS NOT DISTINCT FROM p_project_id
-		AND bun.title IS NOT DISTINCT FROM p_title;
-		
-	RETURN l_bundle_id;
-	
-	EXCEPTION
-		WHEN NO_DATA_FOUND THEN
-			INSERT INTO public.bundles (name, parent_bundle_id, project_id, title)
-			VALUES (p_name, p_parent_bundle_id, p_project_id, p_title);
-			return currval('public.bundle_id_seq');
-		WHEN TOO_MANY_ROWS THEN
-			RAISE EXCEPTION 'Found more than one row in bundles for name %', p_name;
+    AS $$
+
+DECLARE
+
+	l_bundle_id INTEGER;
+
+BEGIN
+
+	SELECT id INTO STRICT l_bundle_id
+
+	FROM public.bundles AS bun
+
+	WHERE
+
+		UPPER(bun.name) IS NOT DISTINCT FROM UPPER(p_name)
+
+        AND bun.parent_bundle_id IS NOT DISTINCT FROM p_parent_bundle_id 
+
+		AND bun.project_id IS NOT DISTINCT FROM p_project_id
+
+		AND bun.title IS NOT DISTINCT FROM p_title;
+
+		
+
+	RETURN l_bundle_id;
+
+	
+
+	EXCEPTION
+
+		WHEN NO_DATA_FOUND THEN
+
+			INSERT INTO public.bundles (name, parent_bundle_id, project_id, title)
+
+			VALUES (p_name, p_parent_bundle_id, p_project_id, p_title);
+
+			return currval('public.bundle_id_seq');
+
+		WHEN TOO_MANY_ROWS THEN
+
+			RAISE EXCEPTION 'Found more than one row in bundles for name %', p_name;
+
 END; $$;
 
 
@@ -219,24 +287,42 @@ END; $$;
 
 CREATE FUNCTION "insert_bundles_data"("p_parent_bundle_id" integer, "p_name" "text", "p_project_id" "text", "p_title" "text") RETURNS integer
     LANGUAGE "plpgsql"
-    AS $$
-BEGIN
-	
-	if exists ( select 1 from public.bundles as bun where upper(bun.name) = upper(p_name)
-                and bun.parent_bundle_id = p_parent_bundle_id 
-				and bun.project_id = p_project_id
-				and bun.title = p_title)
-    then
-          return( select id from public.bundles as bun where upper(bun.name) = upper(p_name)
-                and bun.parent_bundle_id = p_parent_bundle_id 
-				and bun.project_id = p_project_id
-				and bun.title = p_title);
-    else
-    	INSERT INTO public.bundles (id, name, parent_bundle_id, project_id, title)
-     	VALUES (nextval('public.bundles_id_seq'), p_name, p_parent_bundle_id, p_project_id, p_title);
-    	return currval('public.bundles_id_seq');
-     end if;
-   
+    AS $$
+
+BEGIN
+
+	
+
+	if exists ( select 1 from public.bundles as bun where upper(bun.name) = upper(p_name)
+
+                and bun.parent_bundle_id = p_parent_bundle_id 
+
+				and bun.project_id = p_project_id
+
+				and bun.title = p_title)
+
+    then
+
+          return( select id from public.bundles as bun where upper(bun.name) = upper(p_name)
+
+                and bun.parent_bundle_id = p_parent_bundle_id 
+
+				and bun.project_id = p_project_id
+
+				and bun.title = p_title);
+
+    else
+
+    	INSERT INTO public.bundles (id, name, parent_bundle_id, project_id, title)
+
+     	VALUES (nextval('public.bundles_id_seq'), p_name, p_parent_bundle_id, p_project_id, p_title);
+
+    	return currval('public.bundles_id_seq');
+
+     end if;
+
+   
+
 END; $$;
 
 
@@ -247,28 +333,50 @@ END; $$;
 
 CREATE FUNCTION "insert_contractor_data"("p_name" "text", "p_email" "text", "p_phone" "text", "p_pm_contact" character varying) RETURNS integer
     LANGUAGE "plpgsql"
-    AS $$
-DECLARE
-	contractorId INTEGER;
-BEGIN
-	SELECT id INTO STRICT contractorId
-	FROM public.contractors AS con
-	WHERE
-		UPPER(con.name) IS NOT DISTINCT FROM UPPER(p_name)
-        AND UPPER(con.email) IS NOT DISTINCT FROM UPPER(p_email)
-        AND con.phone IS NOT DISTINCT FROM p_phone
-		AND UPPER(con.pm_contact) IS NOT DISTINCT FROM UPPER(p_pm_contact)
-		ORDER BY id;
-
-		RETURN contractorId;
-
-		EXCEPTION
-			WHEN NO_DATA_FOUND THEN
-				INSERT INTO public.contractors (name, email, phone, pm_contact) VALUES (p_name, p_email, p_phone, p_pm_contact);
-				RETURN CURRVAL('public.contractors_id_seq');
-			WHEN TOO_MANY_ROWS THEN
-				RAISE EXCEPTION 'Found more than one row in contractors for name %', p_name;
-
+    AS $$
+
+DECLARE
+
+	contractorId INTEGER;
+
+BEGIN
+
+	SELECT id INTO STRICT contractorId
+
+	FROM public.contractors AS con
+
+	WHERE
+
+		UPPER(con.name) IS NOT DISTINCT FROM UPPER(p_name)
+
+        AND UPPER(con.email) IS NOT DISTINCT FROM UPPER(p_email)
+
+        AND con.phone IS NOT DISTINCT FROM p_phone
+
+		AND UPPER(con.pm_contact) IS NOT DISTINCT FROM UPPER(p_pm_contact)
+
+		ORDER BY id;
+
+
+
+		RETURN contractorId;
+
+
+
+		EXCEPTION
+
+			WHEN NO_DATA_FOUND THEN
+
+				INSERT INTO public.contractors (name, email, phone, pm_contact) VALUES (p_name, p_email, p_phone, p_pm_contact);
+
+				RETURN CURRVAL('public.contractors_id_seq');
+
+			WHEN TOO_MANY_ROWS THEN
+
+				RAISE EXCEPTION 'Found more than one row in contractors for name %', p_name;
+
+
+
 END; $$;
 
 
@@ -279,28 +387,50 @@ END; $$;
 
 CREATE FUNCTION "insert_location_data"("p_street" character varying, "p_city" character varying, "p_state" character varying, "p_country" character varying, "p_latitude" double precision, "p_longitude" double precision) RETURNS integer
     LANGUAGE "plpgsql"
-    AS $$
-DECLARE
-	l_location_id INTEGER;
-BEGIN
-	SELECT id INTO STRICT l_location_id
-	FROM public.locations AS loc
-	WHERE
-		UPPER(loc.street) IS NOT DISTINCT FROM UPPER(p_street)
-        AND UPPER(loc.city) IS NOT DISTINCT FROM UPPER(p_city) 
-		AND UPPER(loc.state) IS NOT DISTINCT FROM UPPER(p_state)
-        AND UPPER(loc.country) IS NOT DISTINCT FROM UPPER(p_country);
-		
-	RETURN l_location_id;
-	
-	EXCEPTION
-		WHEN NO_DATA_FOUND THEN
-			INSERT INTO public.locations (street, city, state, country, latitude, longitude)
-			VALUES (p_street, p_city, p_state, p_country, p_latitude, p_longitude);
-			RETURN CURRVAL('public.locations_id_seq');
-		WHEN TOO_MANY_ROWS THEN
-			RAISE EXCEPTION 'Found more than one row in phases for name %', p_name;
-   
+    AS $$
+
+DECLARE
+
+	l_location_id INTEGER;
+
+BEGIN
+
+	SELECT id INTO STRICT l_location_id
+
+	FROM public.locations AS loc
+
+	WHERE
+
+		UPPER(loc.street) IS NOT DISTINCT FROM UPPER(p_street)
+
+        AND UPPER(loc.city) IS NOT DISTINCT FROM UPPER(p_city) 
+
+		AND UPPER(loc.state) IS NOT DISTINCT FROM UPPER(p_state)
+
+        AND UPPER(loc.country) IS NOT DISTINCT FROM UPPER(p_country);
+
+		
+
+	RETURN l_location_id;
+
+	
+
+	EXCEPTION
+
+		WHEN NO_DATA_FOUND THEN
+
+			INSERT INTO public.locations (street, city, state, country, latitude, longitude)
+
+			VALUES (p_street, p_city, p_state, p_country, p_latitude, p_longitude);
+
+			RETURN CURRVAL('public.locations_id_seq');
+
+		WHEN TOO_MANY_ROWS THEN
+
+			RAISE EXCEPTION 'Found more than one row in phases for name %', p_name;
+
+   
+
 END; $$;
 
 
@@ -311,29 +441,52 @@ END; $$;
 
 CREATE FUNCTION "insert_phases_data"("p_name" "text", "p_sch_start" "date", "p_sch_end" "date", "p_act_start" "date", "p_act_end" "date") RETURNS integer
     LANGUAGE "plpgsql"
-    AS $$
-DECLARE
-	l_phase_id INTEGER;
-BEGIN
-	SELECT id INTO STRICT l_phase_id
-	FROM public.phases AS p
-	WHERE
-		UPPER(p.name) IS NOT DISTINCT FROM UPPER(p_name)
-		and p.scheduled_start IS NOT DISTINCT FROM p_sch_start
-		and p.scheduled_end IS NOT DISTINCT FROM p_sch_end
-		and p.actual_start IS NOT DISTINCT FROM p_act_start
-		and p.actual_end IS NOT DISTINCT FROM p_act_end;
-    
-	RETURN l_phase_id;
-	
-	EXCEPTION
-		WHEN NO_DATA_FOUND THEN
-			INSERT INTO public.phases (name, scheduled_start, scheduled_end, actual_start, actual_end) 
-			VALUES (p_name, p_sch_start, p_sch_end, p_act_start, p_act_end);
-			RETURN CURRVAL('public.phases_id_seq');
-		WHEN TOO_MANY_ROWS THEN
-			RAISE EXCEPTION 'Found more than one row in phases for name %', p_name;
-   
+    AS $$
+
+DECLARE
+
+	l_phase_id INTEGER;
+
+BEGIN
+
+	SELECT id INTO STRICT l_phase_id
+
+	FROM public.phases AS p
+
+	WHERE
+
+		UPPER(p.name) IS NOT DISTINCT FROM UPPER(p_name)
+
+		and p.scheduled_start IS NOT DISTINCT FROM p_sch_start
+
+		and p.scheduled_end IS NOT DISTINCT FROM p_sch_end
+
+		and p.actual_start IS NOT DISTINCT FROM p_act_start
+
+		and p.actual_end IS NOT DISTINCT FROM p_act_end;
+
+    
+
+	RETURN l_phase_id;
+
+	
+
+	EXCEPTION
+
+		WHEN NO_DATA_FOUND THEN
+
+			INSERT INTO public.phases (name, scheduled_start, scheduled_end, actual_start, actual_end) 
+
+			VALUES (p_name, p_sch_start, p_sch_end, p_act_start, p_act_end);
+
+			RETURN CURRVAL('public.phases_id_seq');
+
+		WHEN TOO_MANY_ROWS THEN
+
+			RAISE EXCEPTION 'Found more than one row in phases for name %', p_name;
+
+   
+
 END; $$;
 
 
@@ -400,31 +553,56 @@ LANGUAGE plpgsql;
 
 CREATE FUNCTION "insert_project_data"("p_name" "text", "p_start" "date", "p_end" "date", "p_workdays" "json", "p_budget" integer, "p_bundle_title" "text", "p_location_id" integer, "p_contingency" bigint) RETURNS integer
     LANGUAGE "plpgsql"
-    AS $$
-DECLARE
-	l_project_id INTEGER;
-BEGIN
-	SELECT id INTO STRICT l_project_id
-	FROM public.projects AS prj
-	WHERE
-		UPPER(prj.name) IS NOT DISTINCT FROM UPPER(p_name)
-        --AND prj.workdays IS NOT DISTINCT FROM p_workdays 
-		AND prj.bundle_title IS NOT DISTINCT FROM p_bundle_title
-        AND start IS NOT DISTINCT FROM p_start 
-		AND "end" IS NOT DISTINCT FROM p_end 
-		AND location_id IS NOT DISTINCT FROM p_location_id 
-		AND contingency IS NOT DISTINCT FROM p_contingency;
-		
-	RETURN l_project_id;
-	
-	EXCEPTION
-		WHEN NO_DATA_FOUND THEN
-			INSERT INTO public.projects (name, start, "end", workdays, budget, bundle_title, location_id, contingency)
-			VALUES (p_name, p_start, p_end, p_workdays, p_budget, p_bundle_title, p_location_id, p_contingency);
-			RETURN currval('public.projects_id_seq');
-		WHEN TOO_MANY_ROWS THEN
-			RAISE EXCEPTION 'Found more than one row in projects for name %', p_name;
-	
+    AS $$
+
+DECLARE
+
+	l_project_id INTEGER;
+
+BEGIN
+
+	SELECT id INTO STRICT l_project_id
+
+	FROM public.projects AS prj
+
+	WHERE
+
+		UPPER(prj.name) IS NOT DISTINCT FROM UPPER(p_name)
+
+        --AND prj.workdays IS NOT DISTINCT FROM p_workdays 
+
+		AND prj.bundle_title IS NOT DISTINCT FROM p_bundle_title
+
+        AND start IS NOT DISTINCT FROM p_start 
+
+		AND "end" IS NOT DISTINCT FROM p_end 
+
+		AND location_id IS NOT DISTINCT FROM p_location_id 
+
+		AND contingency IS NOT DISTINCT FROM p_contingency;
+
+		
+
+	RETURN l_project_id;
+
+	
+
+	EXCEPTION
+
+		WHEN NO_DATA_FOUND THEN
+
+			INSERT INTO public.projects (name, start, "end", workdays, budget, bundle_title, location_id, contingency)
+
+			VALUES (p_name, p_start, p_end, p_workdays, p_budget, p_bundle_title, p_location_id, p_contingency);
+
+			RETURN currval('public.projects_id_seq');
+
+		WHEN TOO_MANY_ROWS THEN
+
+			RAISE EXCEPTION 'Found more than one row in projects for name %', p_name;
+
+	
+
 END; $$;
 
 
@@ -435,24 +613,42 @@ END; $$;
 
 CREATE FUNCTION "insert_units_data"("p_name" "text", "p_id" integer) RETURNS integer
     LANGUAGE "plpgsql"
-    AS $$
-DECLARE
-	l_unit_id INTEGER;
-BEGIN
-	SELECT id INTO STRICT l_unit_id
-	FROM public.units AS u
-	WHERE
-		UPPER(u.name) = UPPER(p_name);
-    
-	RETURN l_unit_id;
-		
-	EXCEPTION
-		WHEN NO_DATA_FOUND THEN
-			INSERT INTO public.units (name) VALUES (p_name);
-			RETURN CURRVAL('public.units_id_seq');
-		WHEN TOO_MANY_ROWS THEN
-			RAISE EXCEPTION 'Found more than one row in units for name %', p_name;
-   
+    AS $$
+
+DECLARE
+
+	l_unit_id INTEGER;
+
+BEGIN
+
+	SELECT id INTO STRICT l_unit_id
+
+	FROM public.units AS u
+
+	WHERE
+
+		UPPER(u.name) = UPPER(p_name);
+
+    
+
+	RETURN l_unit_id;
+
+		
+
+	EXCEPTION
+
+		WHEN NO_DATA_FOUND THEN
+
+			INSERT INTO public.units (name) VALUES (p_name);
+
+			RETURN CURRVAL('public.units_id_seq');
+
+		WHEN TOO_MANY_ROWS THEN
+
+			RAISE EXCEPTION 'Found more than one row in units for name %', p_name;
+
+   
+
 END; $$;
 
 
@@ -463,23 +659,40 @@ END; $$;
 
 CREATE FUNCTION "prep_file_storage"() RETURNS "void"
     LANGUAGE "plpgsql"
-    AS $$
-DECLARE
-	l_num_rows INTEGER;
-BEGIN
-	SELECT COUNT(1) INTO STRICT l_num_rows
-	FROM   file_storage;
-    
-	EXCEPTION
-		WHEN NO_DATA_FOUND THEN
-			INSERT INTO file_storage (load_type, filename) VALUES ( 'Structural', NULL);
-			INSERT INTO file_storage (load_type, filename) VALUES ( 'Baseline', NULL);
-			INSERT INTO file_storage (load_type, filename) VALUES ( 'Production', NULL);
-		WHEN TOO_MANY_ROWS THEN
-			IF ( l_num_rows < 3 or l_num_rows > 3 ) THEN
-				RAISE EXCEPTION 'Found incorrect number of rows in file_storage';
-			END IF;
-   
+    AS $$
+
+DECLARE
+
+	l_num_rows INTEGER;
+
+BEGIN
+
+	SELECT COUNT(1) INTO STRICT l_num_rows
+
+	FROM   file_storage;
+
+    
+
+	EXCEPTION
+
+		WHEN NO_DATA_FOUND THEN
+
+			INSERT INTO file_storage (load_type, filename) VALUES ( 'Structural', NULL);
+
+			INSERT INTO file_storage (load_type, filename) VALUES ( 'Baseline', NULL);
+
+			INSERT INTO file_storage (load_type, filename) VALUES ( 'Production', NULL);
+
+		WHEN TOO_MANY_ROWS THEN
+
+			IF ( l_num_rows < 3 or l_num_rows > 3 ) THEN
+
+				RAISE EXCEPTION 'Found incorrect number of rows in file_storage';
+
+			END IF;
+
+   
+
 END; $$;
 
 
