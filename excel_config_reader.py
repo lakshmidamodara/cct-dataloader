@@ -51,6 +51,10 @@ def getActivitySheets():
     list_sheets = config['ARelated']['Activity_Sheet_Range']
     return list_sheets
 
+def getTotalWorkdays():
+    getWorkdays = config['TotalWorkDays']['workdays']
+    return getWorkdays
+
 '''
 # Testing the program
 # get total sheets
