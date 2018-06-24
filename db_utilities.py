@@ -51,6 +51,19 @@ def executeQuery(conn, exSQL):
        print("Database Error %s " % error)
        raise
 
+def executeQueryRes(conn, exSQL):
+   try:
+       cur = conn.cursor()
+       print(exSQL)
+       cur.execute(exSQL)
+       rows = cur.fetchall()
+       conn.commit()
+       cur.close()
+       return(rows)
+   except (Exception, psycopg2.DatabaseError) as error:
+       print("Database Error %s " % error)
+       raise
+
 def fetchStoredFuncRes(conn, exSQL, exData):
     ## This function is useful to call stored procs for single row returns
    try:
@@ -59,8 +72,8 @@ def fetchStoredFuncRes(conn, exSQL, exData):
        # process the result set
        row = cur.fetchone()
        conn.commit()
-       return(row)
        cur.close()
+       return(row)
        print(exSQL)
        print(exData)
    except (Exception, psycopg2.DatabaseError) as error:
