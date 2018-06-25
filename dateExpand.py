@@ -18,7 +18,7 @@ f = open('output.txt','w')
 def readExcelFile():
     try:
         # file name declaration with path
-        L_FileName = 'D:\Anaconda3\Kumar\cct\WorkPlan1.xlsx'
+        L_FileName = 'D:\Anaconda3\Kumar\cct\WorkPlan.xlsx'
 
         # passing the file name and creating an instance of the workbook with actual values and ignoring the formulas
         wb = openpyxl.load_workbook(L_FileName, data_only='True')
@@ -272,9 +272,9 @@ expandDates(result_data)
 7.1.1 For each date : check the following:
 7.1.2 The day of the week (Monday =0 ... Sunday = 6) --> getDayOfWeek(date)
 7.1.3 Next check whether the date is a holiday by calling function --> checkIfHoliday(d)
-7.1.3.1 If the date is a holiday, then discard the date
-7.1.4 If its a 5 day week, get the dates between 0 to 4
-7.1.5 If its a 6 day week, get the dates between 0 to 5
+7.1.3.1 If the date is a holiday, then discard insert the date with planned_hours = None
+7.1.4 If its a 5 day week, get the dates between 0 to 4 , for other days, the planned_hours = None
+7.1.5 If its a 6 day week, get the dates between 0 to 5, for other days i.e, day 6, planned_hours = None
 7.1.6 Create a Insert query string with each expanded date and planned hours = 8
 
 readHolidaysExcel(wb, wrksheet_names)
