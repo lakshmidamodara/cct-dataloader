@@ -55,6 +55,10 @@ def getTotalWorkdays():
     getWorkdays = config['TotalWorkDays']['workdays']
     return getWorkdays
 
+def outlineLevel():
+    outlineLevel = config['OUTLINELEVEL']['outline_level']
+    return outlineLevel
+
 '''
 # Testing the program
 # get total sheets
