@@ -144,6 +144,7 @@ def getParentChildActivities():
         previous_level = 0
         current_level = 0
         next_level = 0
+        parent_activity_name = ""
 
         # first remove empty list from result_data i.e, if there are empty rows in the excel
         result_data1 = [x for x in result_data if x != []]
@@ -167,10 +168,16 @@ def getParentChildActivities():
                 local_node_result.append(result_data1[i][3])
                 final_list.append(local_node_result)
 
+            # if the current activity is greater than the previous one
+            # then the parent activity name is stored in the variable to
+            # be concatenated with the current levels
+            if int(current_level) > int(previous_level):
+                parent_activity_name = result_data1[i-1][0]
 
             if int(current_level) >= int(previous_level):
                 if int(current_level) >= int(next_level):
-                    local_node_result.append(result_data1[i][0])
+                    local_activity_name = parent_activity_name + "-" + result_data1[i][0]
+                    local_node_result.append(local_activity_name)
                     local_node_result.append(result_data1[i][1])
                     local_node_result.append(result_data1[i][2])
                     local_node_result.append(result_data1[i][3])
