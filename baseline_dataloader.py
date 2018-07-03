@@ -18,20 +18,30 @@ class ErrorOccured(RuntimeError):
 #print(datetime.datetime.today())
 print('##-----------------------------------------------------........')
 
-#streamData = sys.stdin.read()
-#decodedData = base64.b64decode(streamData)
-#excelData = io.BytesIO(decodedData)
-#wb = xlrd.open_workbook(file_contents=excelData.getvalue())
+streamData = sys.stdin.read()
+decodedData = base64.b64decode(streamData)
+excelData = io.BytesIO(decodedData)
+wb = xlrd.open_workbook(file_contents=excelData.getvalue())
 
 # initiate the list to store the excel read
 result_data = []
 resultData = []
 holiday_data = []
+final_list = []
+parentChildDict = {}
 f = open('output.txt','w')
+prjName = ""
 
-def main():
+def main(argv):
     try:
-        wb = readExcelFile()
+        # first get the argument which has the project name
+        global prjName
+        try:
+            prjName = sys.argv[1]
+        except IndexError:
+            print("Missing argument. Usage: %s projectName" %sys.argv[0])
+            sys.exit(1)
+        #wb = readExcelFile()
         # Getting the activesheet for date processing
         # getting the active worksheet
         wrksheet_names = wb.sheet_names()
@@ -46,14 +56,11 @@ def main():
     except (ErrorOccured) as e:
         print("Error in main() %s" %e)
 
-
-
 # This function reads the excel file and returns the workbook address to the called function
 def readExcelFile():
     try:
         # file name declaration with path
-        L_FileName = 'c:\\Temp\\Uniper\\Workplan.xlsx'
-        # L_FileName = 'c:\\temp\\kumar\\cct\\WorkPlan.xlsx'
+        L_FileName = 'c:\\temp\\uniper\\WorkPlan.xlsx'
 
         # passing the file name and creating an instance of the workbook with actual values and ignoring the formulas
         # wb = openpyxl.load_workbook(L_FileName, data_only='True')
@@ -74,7 +81,6 @@ def readMainActivitySheet(wkbook,sheetindex):
         activityName_active_sheet = wkbook.sheet_by_index(0)
         # pass the active sheet name
         sheet = activityName_active_sheet.name
-        print(sheet)
 
         # get the max count of rows and cols
         m_row = wkbook.sheet_by_index(0).nrows
@@ -103,48 +109,92 @@ def readMainActivitySheet(wkbook,sheetindex):
                     if activityData != "":
                         result_unique_row.append(data)
             result_data.append(result_unique_row)
+        print("\n",file=f)
         print('###### Data from result_data: readMainActivitySheet()', file=f)
         print(result_data,file=f)
-
         ### now insert the activity in activities table
-        retStatus = insertActivity()
-        if retStatus != 0:
-            raise ErrorOccured("Error while inserting Activity data in insertActivity()")
     except (Exception) as error:
         print ("Error in readMainActivitySheet(): %s" %error)
     except (ErrorOccured) as e:
         print("Error in readMainActivitySheet(): %s" %e)
 
 
-# This function takes the list from result_data and first removes any empty list
-# Then based on the outline level from the excel_config.ini file
-# reads data which is equal or greater than the outlinelevel value
-def outlineLevel(result_data):
+# This method sets the dictionary key values of the parent activity and process level
+def maintainParentChildActivityName(ActivityName, dictKey):
+    # creating a dictionary with objects
+    global parentChildDict
+    parentChildDict[dictKey] = ActivityName
+
+
+# This method takes the result_data list
+# removes all the empty record list.
+# opens up the final_data list, inserts the first node, which is the project or parent node.
+# then using previous, current and final cursor (level) parses through the record list and finds out the lowest node
+# in the list and creates the final_list
+def getParentChildActivities():
     try:
-        rList = []
-        #get the outline levels from excel_config.ini file
-        outline_level = ecr.outlineLevel()
-        ol = int(outline_level)
+        previous_level = 0
+        current_level = 0
+        next_level = 0
+        parent_activity_name = ""
 
         # first remove empty list from result_data i.e, if there are empty rows in the excel
         result_data1 = [x for x in result_data if x != []]
-        # get the length of result_data1
+        print("\n", file=f)
+        print("############## Result Data List in getParentChildActivities after Null ",file=f)
+        print(result_data1,file=f)
         totalRec = len(result_data1)
-        #counter = 0
-        for i in range(0,totalRec):
-            rList = []
-            data = int(result_data1[i][3])
-            if data >= ol:
-               rList.append(result_data1[i][0])
-               rList.append(result_data1[i][1])
-               rList.append(result_data1[i][2])
-               #counter = counter +1
-               resultData.append(rList)
-        print('########## Data from outlineLevel()', file=f)
-        print(resultData, file=f)
 
+        for i in range(0,totalRec):
+            local_node_result = []
+            previous_level = int(result_data1[i-1][3])
+            current_level = int(result_data1[i][3])
+            maintainParentChildActivityName(result_data1[i][0], current_level)
+            # if it is not the last record
+            if (i+1) != totalRec:
+                next_level = int(result_data1[i+1][3])
+                # if the current activity is greater than the previous one
+                # then the parent activity name is stored in the variable to
+                # be concatenated with the current levels
+                if int(current_level) >= int(previous_level):
+                    if int(current_level) >= int(next_level):
+                        local_Level = int(result_data1[i][3])
+                        parent_activity_name = parentChildDict[local_Level - 1]
+                        local_activity_name = parent_activity_name + "-" + result_data1[i][0]
+                        local_node_result.append(local_activity_name)
+                        local_node_result.append(result_data1[i][1])
+                        local_node_result.append(result_data1[i][2])
+                        local_node_result.append(result_data1[i][3])
+                        final_list.append(local_node_result)
+
+            # this logic is executed for the last record in the list
+            elif (i + 1) == totalRec:
+                # get the dictionary
+                if current_level != previous_level:
+                    local_Level = int(result_data1[i][3])
+                    ActivityName = parentChildDict[local_Level - 1]
+                    local_node_result.append(ActivityName + "-" + result_data1[i][0])
+                    local_node_result.append(result_data1[i][1])
+                    local_node_result.append(result_data1[i][2])
+                    local_node_result.append(local_Level)
+                    final_list.append(local_node_result)
+
+                elif current_level == previous_level:
+                    local_Level = int(result_data1[i][3])
+                    ActivityName = parentChildDict[local_Level - 1]
+                    local_node_result.append(ActivityName + "-" + result_data1[i][0])
+                    local_node_result.append(result_data1[i][1])
+                    local_node_result.append(result_data1[i][2])
+                    local_node_result.append(local_Level)
+                    # get the parent of the last node
+                    final_list.append(local_node_result)
+
+        print("\n",file=f)
+        print("########## Printing Final dataset to be inserted.- getParentChildActivities()... ##########", file=f)
+        print(final_list,file=f)
     except (Exception) as error:
-        print("Error in outLineLevel(): %s" %error)
+        print(error)
+
 
 #This function reads the result_data and does the following:
 #  inserts the activity, start date and end date in activities table
@@ -153,41 +203,32 @@ def outlineLevel(result_data):
 # Function reads the total work days from excel_config.ini file and based on the value of [TotalWorkDays]
 # it expands the date. If it is 5, then only dates between monday to friday is generated
 # if TotalWorkDays is 6, then dates between monday to saturday is generated.
-def expandDates(result_data):
+def expandDates():
     try:
-        if (len(resultData)) == 0:
+        if (len(final_list)) == 0:
             raise ErrorOccured("Empty result List")
-
-        # first remove empty list from result_data i.e, if there are empty rows in the excel
-        #result_data1 = [x for x in result_data if x != [] or x!= [None]]
-        #print(result_data1,file=f)
 
         #get database connection
         db_conn = dbu.getConn()
-
         # get the total workdays in a week
         tWdays = ecr.getTotalWorkdays()
         planned_hours =8
-        totalRecords = len(resultData)
-        print(totalRecords)
-        counter=0
-        dDays = []
-
-        print("#### Printing insert query for activity_data ######")
+        totalRecords = len(final_list)
+        #counter=0
+        print("\n",file=f)
+        print("#### Printing insert query for activity_data ######", file=f)
         ## Truncate temp.activity_data. We will insert rows into this table
         ## and then call a stored function to transfer them into activity_data table
         execSQL = "TRUNCATE TABLE temp.activity_data"
         dbu.executeQuery(db_conn, execSQL)
         for i in range(0,totalRecords):
-            #for j in range (1,2):
-            activityN = resultData[i][0]
-            stDate = resultData[i][1]
-            endDate = resultData[i][2]
+            activityN = final_list[i][0]
+            stDate = final_list[i][1]
+            endDate = final_list[i][2]
 
             #Now for each activity, expand the dates startDate until end date
             # and insert into the activities_data table
             dd = [stDate + timedelta(days=x) for x in range((endDate - stDate).days + 1)]
-            #print(dd)
 
             for d in dd:
                 execSQL = "INSERT INTO TEMP.ACTIVITY_DATA (ACTIVITY_NAME,DATE,PLANNED_UNITS) VALUES (%s,%s,%s);"
@@ -201,41 +242,36 @@ def expandDates(result_data):
                             # activities table insert
                             execData = (activityN, d,planned_hours)
                             dbu.executeQueryWithData(db_conn, execSQL, execData)
-                            #print(execSQL, execData,file=f)
+                            print(execSQL, execData,file=f)
                             #counter = counter + 1 #comment this line in production
                         elif wDay == 5 or wDay == 6: # if it is a saturday or sunday, insert a NONE for the planned hours
                             planned_hours = None
                             execData = (activityN, d, planned_hours)
                             dbu.executeQueryWithData(db_conn, execSQL, execData)
-                            #print(execSQL, execData, file=f)
+                            print(execSQL, execData, file=f)
                             #counter = counter + 1  # comment this line in production
                     elif dstat == 'h': # if it is a holiday, insert a NONE for the planned hours
                         planned_hours = None
                         execData = (activityN, d, planned_hours)
                         dbu.executeQueryWithData(db_conn, execSQL, execData)
-                        #print(execSQL, execData, file=f)
-                        #counter = counter + 1  # comment this line in production
+                        print(execSQL, execData, file=f)
                 elif tWdays == '6': # if its a 6 day work week : monday to Saturday
                     if dstat == 'w':
                         if wDay == 0 or wDay == 1 or wDay == 2 or wDay == 3 or wDay == 4 or wDay == 5:
                             execData = (activityN, d, planned_hours)
                             dbu.executeQueryWithData(db_conn, execSQL, execData)
-                            #print(execSQL, execData,file=f)
+                            print(execSQL, execData,file=f)
                             #counter = counter + 1  #comment this line in production
                         elif wDay == 6: # if it is a saturday or sunday, insert a NONE for the planned hours
                             planned_hours = None
                             execData = (activityN, d, planned_hours)
                             dbu.executeQueryWithData(db_conn, execSQL, execData)
-                            #print(execSQL, execData, file=f)
-                            #counter = counter + 1  # comment this line in production
+                            print(execSQL, execData, file=f)
                     elif dstat == 'h': # if it is a holiday, insert a NONE for the planned hours
                         planned_hours = None
                         execData = (activityN, d, planned_hours)
                         dbu.executeQueryWithData(db_conn, execSQL, execData)
-                        #print(execSQL, execData, file=f)
-                        #counter = counter + 1  # comment this line in production
-            #print(counter) #comment this line in production
-            #counter = 0  #comment this line in production
+                        print(execSQL, execData, file=f)
 
         ## Call the stored function to insert into activity_data
         stProc = "SELECT update_baseline_activity_data()"
@@ -250,24 +286,24 @@ def expandDates(result_data):
 
 def insertActivity():
     try:
+        print("\n", file=f)
         db_conn = dbu.getConn()
 
         # first remove empty list from result_data i.e, if there are empty rows in the excel
-        local_result_data = [x for x in result_data if x != []]
-        totalRec = len(local_result_data)
+        totalRec = len(final_list)
         print("#### Data from local_result_data : insertActivity()", file=f)
-        print(local_result_data, file=f)
+        print(final_list, file=f)
 
         print("##### Insert statements from insertActivity()", file=f)
         for i in range(0, totalRec):
-            activityN = local_result_data[i][0]
-            stDate = local_result_data[i][1]
-            endDate = local_result_data[i][2]
+            activityN = final_list[i][0]
+            stDate = final_list[i][1]
+            endDate = final_list[i][2]
             print(stDate, endDate, file=f)
             # activities table insert
             execSQL = "INSERT INTO ACTIVITIES (NAME,PLANNED_START,PLANNED_END) VALUES (%s,%s,%s);"
             execData = (activityN,stDate,endDate)
-            #print(execSQL,execData,file=f)
+            print(execSQL,execData,file=f)
             dbu.executeQueryWithData(db_conn, execSQL, execData)
 
     except(Exception) as error:
@@ -278,16 +314,15 @@ def insertActivity():
 #check if the given date is a holiday or a working day
 def checkIfHoliday(dDate):
     try:
-        dayStatus = 'w'
-        if dDate in holiday_data:
-            #print('I am in holiday')
+        dtString = datetime.strftime(dDate,'%Y-%m-%d')
+        if dtString in holiday_data:
             dayStatus = 'h'
             return dayStatus
         else:
+            dayStatus = 'w'
             return dayStatus
     except (Exception) as error:
         print("Error in checkIfHoliday() %s" %error)
-
 
 # this function accepts the date as an argument
 # and returns the day of the date. Mon =1, tue=2, wed=3 ....sat=6, sun=0
@@ -307,28 +342,19 @@ def readHolidays(wkbook,sheetindex):
     try:
         # get database connection
         db_conn = dbu.getConn()
-        stProc = "SELECT holiday from holidays"
-        m_row = dbu.executeQueryRes(db_conn, stProc)
-
-        # First make sure that the Holidays sheet exist : Make it the active sheet
-        # if Holidays sheet does not exist, then this module is skipped
-        #sheet = wkbook['Holidays']
-        # get the max count of rows and cols
-        #m_row = sheet.max_row
-        #m_row = m_row + 1
-
+        execSQL = "SELECT holiday from holidays where project_id = ( select id from projects where name = %s );"
+        execData = (prjName,)
+        m_row = dbu.executeQueryResWithData(db_conn, execSQL, execData)
         numHolidays = len(m_row)
+
         # Reading the excel sheet from row number 2
         #for curr_row in range(0, numHolidays, 1):
         for row in m_row:
-            result_unique_row = []
             # Appending the activity name
             #data = sheet.cell(row=curr_row, column=1)
             if row[0] != None:
-               # dtDate = datetime.strptime(row[0], '%B %d,%Y')
-               dtDate = row[0].strftime("%Y-%m-%d")
+               dtDate = row[0].strftime('%Y-%m-%d')
                holiday_data.append(dtDate)
-        #print(holiday_data)
     except (Exception) as error:
         print ("Error in readHolidayExcel(): %s" %error)
     except (ErrorOccured) as e:
@@ -337,10 +363,21 @@ def readHolidays(wkbook,sheetindex):
 
 #---- Main function starts ----
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
+#insertFirstNode()
+getParentChildActivities()
+insertActivity()
+expandDates()
 
-outlineLevel(result_data)
-expandDates(resultData)
+print("##### --- Releasing all lists from Memory and quitting the program with exit code 0 ---", file=f)
+
+#This is the final method that is called to release all open objects
+del result_data # destroys the result_data[]
+del resultData #destroys the resultData[]
+del holiday_data
+del final_list
+del parentChildDict
+f.close() # closes the text file
 
 '''
 Program Logic
