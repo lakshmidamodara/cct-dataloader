@@ -28,6 +28,7 @@ result_data = []
 resultData = []
 holiday_data = []
 final_list = []
+parentChildDict = {}
 f = open('output.txt','w')
 
 def main():
@@ -75,7 +76,6 @@ def readMainActivitySheet(wkbook,sheetindex):
         activityName_active_sheet = wkbook.sheet_by_index(0)
         # pass the active sheet name
         sheet = activityName_active_sheet.name
-        print(sheet)
 
         # get the max count of rows and cols
         m_row = wkbook.sheet_by_index(0).nrows
@@ -104,35 +104,22 @@ def readMainActivitySheet(wkbook,sheetindex):
                     if activityData != "":
                         result_unique_row.append(data)
             result_data.append(result_unique_row)
+        print("\n",file=f)
         print('###### Data from result_data: readMainActivitySheet()', file=f)
         print(result_data,file=f)
-        print("Length of result_data", len(result_data))
-
         ### now insert the activity in activities table
-        #retStatus = insertActivity()
     except (Exception) as error:
         print ("Error in readMainActivitySheet(): %s" %error)
     except (ErrorOccured) as e:
         print("Error in readMainActivitySheet(): %s" %e)
 
-# This method reads the result_data and gets the first record which is the project level with Level - 1
-def insertFirstNode():
-    try:
-        # first get the first node from the data list
-        print("Length of RLTData - insertFirstNode()", len(result_data))
-        first_node_activity_name = result_data[0][0]
-        first_node_st_date = result_data[0][1]
-        first_node_end_date = result_data[0][2]
-        first_level = result_data[0][3]
 
-        final_list.append(first_node_activity_name)
-        final_list.append(first_node_st_date)
-        final_list.append(first_node_end_date)
-        final_list.append(first_level)
-        #print(final_list)
+# This method sets the dictionary key values of the parent activity and process level
+def maintainParentChildActivityName(ActivityName, dictKey):
+    # creating a dictionary with objects
+    global parentChildDict
+    parentChildDict[dictKey] = ActivityName
 
-    except (Exception) as error:
-        print(error)
 
 # This method takes the result_data list
 # removes all the empty record list.
@@ -148,81 +135,61 @@ def getParentChildActivities():
 
         # first remove empty list from result_data i.e, if there are empty rows in the excel
         result_data1 = [x for x in result_data if x != []]
-        #print(result_data1)
+        print("\n", file=f)
+        print("############## Result Data List in getParentChildActivities after Null ",file=f)
+        print(result_data1,file=f)
         totalRec = len(result_data1)
-        print("Length of TotalRec in getParentChild()", totalRec)
-        for i in range(1,totalRec):
+
+        for i in range(0,totalRec):
             local_node_result = []
             previous_level = int(result_data1[i-1][3])
             current_level = int(result_data1[i][3])
-
+            maintainParentChildActivityName(result_data1[i][0], current_level)
+            # if it is not the last record
             if (i+1) != totalRec:
                 next_level = int(result_data1[i+1][3])
-            elif (i+1) == totalRec:
-                next_level = current_level
-                # if the last record in the list is reached,
-                # we just write the record to the final_list
-                local_node_result.append(result_data1[i][0])
-                local_node_result.append(result_data1[i][1])
-                local_node_result.append(result_data1[i][2])
-                local_node_result.append(result_data1[i][3])
-                final_list.append(local_node_result)
+                # if the current activity is greater than the previous one
+                # then the parent activity name is stored in the variable to
+                # be concatenated with the current levels
+                if int(current_level) >= int(previous_level):
+                    if int(current_level) >= int(next_level):
+                        local_Level = int(result_data1[i][3])
+                        parent_activity_name = parentChildDict[local_Level - 1]
+                        local_activity_name = parent_activity_name + "-" + result_data1[i][0]
+                        local_node_result.append(local_activity_name)
+                        local_node_result.append(result_data1[i][1])
+                        local_node_result.append(result_data1[i][2])
+                        local_node_result.append(result_data1[i][3])
+                        final_list.append(local_node_result)
 
-            # if the current activity is greater than the previous one
-            # then the parent activity name is stored in the variable to
-            # be concatenated with the current levels
-            if int(current_level) > int(previous_level):
-                parent_activity_name = result_data1[i-1][0]
-
-            if int(current_level) >= int(previous_level):
-                if int(current_level) >= int(next_level):
-                    local_activity_name = parent_activity_name + "-" + result_data1[i][0]
-                    local_node_result.append(local_activity_name)
+            # this logic is executed for the last record in the list
+            elif (i + 1) == totalRec:
+                # get the dictionary
+                if current_level != previous_level:
+                    local_Level = int(result_data1[i][3])
+                    ActivityName = parentChildDict[local_Level - 1]
+                    local_node_result.append(ActivityName + "-" + result_data1[i][0])
                     local_node_result.append(result_data1[i][1])
                     local_node_result.append(result_data1[i][2])
-                    local_node_result.append(result_data1[i][3])
+                    local_node_result.append(local_Level)
+                    final_list.append(local_node_result)
+
+                elif current_level == previous_level:
+                    local_Level = int(result_data1[i][3])
+                    ActivityName = parentChildDict[local_Level - 1]
+                    local_node_result.append(ActivityName + "-" + result_data1[i][0])
+                    local_node_result.append(result_data1[i][1])
+                    local_node_result.append(result_data1[i][2])
+                    local_node_result.append(local_Level)
+                    # get the parent of the last node
                     final_list.append(local_node_result)
 
         print("\n",file=f)
-        print("########## Printing Final dataset to be inserted.... ##########", file=f)
+        print("########## Printing Final dataset to be inserted.- getParentChildActivities()... ##########", file=f)
         print(final_list,file=f)
-        print("final list in getParentChild", len(final_list))
     except (Exception) as error:
         print(error)
 
-
-'''
-# This function takes the list from result_data and first removes any empty list
-# Then based on the outline level from the excel_config.ini file
-# reads data which is equal or greater than the outlinelevel value
-def outlineLevel(result_data):
-    try:
-        rList = []
-        #get the outline levels from excel_config.ini file
-        outline_level = ecr.outlineLevel()
-        ol = int(outline_level)
-
-        # first remove empty list from result_data i.e, if there are empty rows in the excel
-        result_data1 = [x for x in result_data if x != []]
-        # get the length of result_data1
-        totalRec = len(result_data1)
-        #counter = 0
-        for i in range(0,totalRec):
-            rList = []
-            data = int(result_data1[i][3])
-            if data >= ol:
-               rList.append(result_data1[i][0])
-               rList.append(result_data1[i][1])
-               rList.append(result_data1[i][2])
-               #counter = counter +1
-               resultData.append(rList)
-        print('########## Data from outlineLevel()', file=f)
-        print(resultData, file=f)
-
-    except (Exception) as error:
-        print("Error in outLineLevel(): %s" %error)
-
-'''
 
 #This function reads the result_data and does the following:
 #  inserts the activity, start date and end date in activities table
@@ -236,29 +203,20 @@ def expandDates():
         if (len(final_list)) == 0:
             raise ErrorOccured("Empty result List")
 
-        # first remove empty list from result_data i.e, if there are empty rows in the excel
-        #result_data1 = [x for x in result_data if x != [] or x!= [None]]
-        #print(result_data1,file=f)
-
         #get database connection
         db_conn = dbu.getConn()
-        print("final list", final_list)
         # get the total workdays in a week
         tWdays = ecr.getTotalWorkdays()
         planned_hours =8
         totalRecords = len(final_list)
-        print(totalRecords)
-        counter=0
-        dDays = []
-
-        print("#### Printing insert query for activity_data ######")
+        #counter=0
+        print("\n",file=f)
+        print("#### Printing insert query for activity_data ######", file=f)
         ## Truncate temp.activity_data. We will insert rows into this table
         ## and then call a stored function to transfer them into activity_data table
         execSQL = "TRUNCATE TABLE temp.activity_data"
         #dbu.executeQuery(db_conn, execSQL) ------------- database execution
-        print(execSQL)
         for i in range(0,totalRecords):
-            #for j in range (1,2):
             activityN = final_list[i][0]
             stDate = final_list[i][1]
             endDate = final_list[i][2]
@@ -266,7 +224,6 @@ def expandDates():
             #Now for each activity, expand the dates startDate until end date
             # and insert into the activities_data table
             dd = [stDate + timedelta(days=x) for x in range((endDate - stDate).days + 1)]
-            print(dd)
 
             for d in dd:
                 execSQL = "INSERT INTO TEMP.ACTIVITY_DATA (ACTIVITY_NAME,DATE,PLANNED_UNITS) VALUES (%s,%s,%s);"
@@ -324,6 +281,7 @@ def expandDates():
 
 def insertActivity():
     try:
+        print("\n", file=f)
         #db_conn = dbu.getConn()
 
         # first remove empty list from result_data i.e, if there are empty rows in the excel
@@ -351,16 +309,15 @@ def insertActivity():
 #check if the given date is a holiday or a working day
 def checkIfHoliday(dDate):
     try:
-        dayStatus = 'w'
-        if dDate in holiday_data:
-            #print('I am in holiday')
+        dtString = datetime.strftime(dDate,'%Y-%m-%d')
+        if dtString in holiday_data:
             dayStatus = 'h'
             return dayStatus
         else:
+            dayStatus = 'w'
             return dayStatus
     except (Exception) as error:
         print("Error in checkIfHoliday() %s" %error)
-
 
 # this function accepts the date as an argument
 # and returns the day of the date. Mon =1, tue=2, wed=3 ....sat=6, sun=0
@@ -390,9 +347,8 @@ def readHolidays(wkbook,sheetindex):
             # Appending the activity name
             #data = sheet.cell(row=curr_row, column=1)
             if row[0] != None:
-               dtDate = row[0].strftime("%Y-%m-%d")
+               dtDate = row[0].strftime('%Y-%m-%d')
                holiday_data.append(dtDate)
-        print(holiday_data)
     except (Exception) as error:
         print ("Error in readHolidayExcel(): %s" %error)
     except (ErrorOccured) as e:
@@ -414,6 +370,7 @@ del result_data # destroys the result_data[]
 del resultData #destroys the resultData[]
 del holiday_data
 del final_list
+del parentChildDict
 f.close() # closes the text file
 
 '''
