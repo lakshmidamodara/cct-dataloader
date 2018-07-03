@@ -34,19 +34,19 @@ prjName = ""
 
 def main(argv):
     try:
+        print("#### --- Program started ----", datetime.now(),file=f)
         # first get the argument which has the project name
         global prjName
-        prjName = sys.argv[1]
         wb = readExcelFile()
         # Getting the activesheet for date processing
         # getting the active worksheet
         wrksheet_names = wb.sheet_names()
-       #read the excel main sheet to get the data
+        #read the excel main sheet to get the data
         readMainActivitySheet(wb, wrksheet_names)
 
         # read the holidays and load it in the holiday_list
         readHolidays(wb, wrksheet_names)
-
+        
     except (Exception) as error:
         print("Error in main() %s" %error)
     except (ErrorOccured) as e:
@@ -359,7 +359,10 @@ def readHolidays(wkbook,sheetindex):
 
 #---- Main function starts ----
 if __name__ == '__main__':
-    main(sys.argv)
+    if len(sys.argv) < 2:
+        print("You must set argument!!!")
+    else:
+        main(sys.argv)
 #insertFirstNode()
 getParentChildActivities()
 insertActivity()
