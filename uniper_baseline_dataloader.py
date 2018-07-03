@@ -30,9 +30,13 @@ holiday_data = []
 final_list = []
 parentChildDict = {}
 f = open('output.txt','w')
+prjName = ""
 
-def main():
+def main(argv):
     try:
+        # first get the argument which has the project name
+        global prjName
+        prjName = sys.argv[1]
         wb = readExcelFile()
         # Getting the activesheet for date processing
         # getting the active worksheet
@@ -47,8 +51,6 @@ def main():
         print("Error in main() %s" %error)
     except (ErrorOccured) as e:
         print("Error in main() %s" %e)
-
-
 
 # This function reads the excel file and returns the workbook address to the called function
 def readExcelFile():
@@ -357,7 +359,7 @@ def readHolidays(wkbook,sheetindex):
 
 #---- Main function starts ----
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
 #insertFirstNode()
 getParentChildActivities()
 insertActivity()
